@@ -13,6 +13,11 @@
   * in the root directory of this software component.
   * If no LICENSE file comes with this software, it is provided AS-IS.
   *
+  *  ********************PROJECT DESCRIPTION********************
+  *  Firmware for smart light switch. Smart switch communicates with Hub to connecto to the internet
+  *  Sends current value (mA) to hub via zigbee network
+  *  Receives action command to turn on or off load from end device(motion sensor)
+  *  also receives on and off command from Hub (interface from internet)
   *
   *
   *Receive Data via Zigbee Protocol
@@ -158,7 +163,7 @@ int main(void)
 			// called parse received data
 			slAddress = Parse_RxSLData(&rxData);
 
-			data_received_flag = 0;
+			data_received_flag = 0;  // resets received status to expect new data
 		}
 
 		CurrentRead = Read_ADC();
@@ -244,8 +249,8 @@ uint8_t Calculate_Current(uint32_t adcValue) {
 void Enable_Load(void){
 	loadActive = 1;
 
-	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, SET);
-	HAL_GPIO_WritePin(GPIOA, VBase_Pin, SET);
+	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, SET); //engage relay
+	HAL_GPIO_WritePin(GPIOA, VBase_Pin, SET); // turn on LEDs
 }
 /*
  * Disable Load when Load is active
@@ -254,8 +259,8 @@ void Enable_Load(void){
 void Disable_Load(void){
 	loadActive = 0;
 
-	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, RESET);
-	HAL_GPIO_WritePin(GPIOA, VBase_Pin, RESET);
+	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, RESET); // disengage relay
+	HAL_GPIO_WritePin(GPIOA, VBase_Pin, RESET); // turn off LEDs
 }
 /*
  * Parse Received Data for ATSL
