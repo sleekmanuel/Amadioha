@@ -56,16 +56,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-// ADC reference voltage (Vref) in volts
-#define V_REF 3.3
-
-// ADC resolution (12-bit gives values from 0 to 4095)
-#define ADC_RESOLUTION 4096.0
-
-// TMCS1123B2A sensitivity (mV per Ampere, example: 50 mV/A)
-#define SENSITIVITY 50.0
-
-#define TxData_BUFFER_SIZE 6
+#define V_REF 3.3 // ADC reference voltage (Vref) in volts
+#define ADC_RESOLUTION 4096.0  // ADC resolution (12-bit gives values from 0 to 4095)
+#define SENSITIVITY 50.0  // TMCS1123B2A sensitivity (mV per Ampere, example: 50 mV/A)
+#define TxData_BUFFER_SIZE 6  // Transmission Buffer size
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -76,12 +70,12 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-//XBee PV
+///////// XBee PV ////////////////////
 uint8_t txData[TxData_BUFFER_SIZE];   // Buffer to store XBee transmission
 uint8_t loadActive = 0;				 // Status for active Load
 volatile uint8_t data_received_flag = 0;  // Flag to indicate data reception
-uint8_t rxData;
-volatile uint8_t rxIndex = 0;
+uint8_t rxData;  /// Received data to process
+volatile uint8_t rxIndex = 0;   //iterating variable to store received data in buffer
 char rx_buffer[6];             // Buffer to store received data
 uint32_t slAddress;				// source low address
 
@@ -161,7 +155,7 @@ int main(void)
   {
 		if(data_received_flag){
 			// called parse received data
-			slAddress = Parse_RxSLData(&rxData);
+			slAddress = Parse_RxSLData((uint8_t*)rx_buffer);
 
 			data_received_flag = 0;  // resets received status to expect new data
 		}
