@@ -24,6 +24,10 @@
   *Receive 		  [4]: Data-> Command (00) or Request (FF)
   *Receive 		  [5]: Command info -> Turn ON Load (0F) Turn off Load (0A)
   *Receive 		  [5]: Request info -> Current Data (01)
+  *
+  *Timers:
+  *Timers: TIM1 -> used temporarily to test transmission
+  *Timers: TIM2 -> utilized for PWM input from TMCS1123
   ******************************************************************************
   */
 /* USER CODE END Header */
@@ -74,12 +78,13 @@ volatile uint8_t data_received_flag = 0;  // Flag to indicate data reception
 uint8_t rxData;
 volatile uint8_t rxIndex = 0;
 char rx_buffer[6];             // Buffer to store received data
+uint32_t slAddress;				// source low address
 
 //ADC PV for Current reading
 uint8_t txCurrentValue;		// Current Value to transmit over zigbee protoc
 uint32_t CurrentRead;		// Read current ADC value
 
-uint32_t S_Addy;
+
 //PWM PV for Sensor Diagnostics
 volatile uint32_t lastCapture = 0;
 volatile uint32_t pwmPeriod = 0;
@@ -151,7 +156,7 @@ int main(void)
   {
 		if(data_received_flag){
 			// called parse received data
-			S_Addy = Parse_RxSLData(&rxData);
+			slAddress = Parse_RxSLData(&rxData);
 
 			data_received_flag = 0;
 		}
