@@ -20,15 +20,15 @@
   *  also receives on and off command from Hub (interface from internet)
   *
   *
-  *Receive Data via Zigbee Protocol
+  *Receive Data frame via Zigbee Protocol
   *Receive 	RxData[6]
   *Receive 		  [0]: ATSL 1
   *Receive 		  [1]: ATSL 2
   *Receive 		  [2]: ATSL 3
   *Receive 		  [3]: ATSL 4
-  *Receive 		  [4]: Data-> Command (00) or Request (FF)
-  *Receive 		  [5]: Command info -> Turn ON Load (0F) Turn off Load (0A)
-  *Receive 		  [5]: Request info -> Current Data (01)
+  *Receive 		  [4]: Control -> Command (C0) or Request (FF)
+  *Receive 		  [5]: Command Data -> Turn ON Load (0F) Turn off Load (0A)
+  *Receive 		  [5]: Request Data -> Current Data (01)
   *
   *Timers:
   *Timers: TIM1 -> used temporarily to test transmission
@@ -39,7 +39,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
-#include "spi.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -77,7 +76,11 @@ volatile uint8_t data_received_flag = 0;  // Flag to indicate data reception
 uint8_t rxData;  /// Received data to process
 volatile uint8_t rxIndex = 0;   //iterating variable to store received data in buffer
 char rx_buffer[6];             // Buffer to store received data
-uint32_t slAddress;				// source low address
+
+//Xbee transmission dataframe
+uint32_t slAddress;				 // source low address
+uint8_t Control;                //used to determine if message is a request or command
+uint8_t Data;				   // Transmission data
 
 //ADC PV for Current reading
 uint8_t txCurrentValue;		// Current Value to transmit over zigbee protoc
@@ -142,7 +145,6 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM2_Init();
   MX_TIM1_Init();
-  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_TIM_Base_Start_IT(&htim1);
@@ -153,10 +155,28 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-		if(data_received_flag){
+
+		if(data_received_flag)
+		{
 			// called parse received data
 			slAddress = Parse_RxSLData((uint8_t*)rx_buffer);
-
+			Control = rx_buffer[4];   // extract command information
+			Data = rx_buffer[5];
+			if(Control == 0xC0){
+				if(Data == 0x0F){
+					  if(loadActive){
+						  ;
+					  }else{
+						  Enable_Load();
+					  }
+				}else if(Data == 0x0F){
+					  if(loadActive){
+						  Disable_Load();
+					  }else{
+						  ;
+					  }
+				}
+			}
 			data_received_flag = 0;  // resets received status to expect new data
 		}
 
@@ -216,7 +236,8 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 
 // Function to read ADC value
-uint32_t Read_ADC(void) {
+uint32_t Read_ADC(void)
+{
     HAL_ADC_Start(&hadc1);  // Start ADC conversion
     HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);  // Wait for conversion to finish
     uint32_t adcValue = HAL_ADC_GetValue(&hadc1);  // Get the ADC value
@@ -225,7 +246,8 @@ uint32_t Read_ADC(void) {
 }
 
 // Function to calculate current based on ADC value
-uint8_t Calculate_Current(uint32_t adcValue) {
+uint8_t Calculate_Current(uint32_t adcValue)
+{
     // Convert ADC value to voltage
     float voltage = (adcValue * V_REF) / ADC_RESOLUTION;
     // Sensor outputs 0.5 * Vcc at zero current
@@ -240,7 +262,8 @@ uint8_t Calculate_Current(uint32_t adcValue) {
  * Enable Load when Load is disabled
  * Turn on Onboard LED
  */
-void Enable_Load(void){
+void Enable_Load(void)
+{
 	loadActive = 1;
 
 	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, SET); //engage relay
@@ -250,7 +273,8 @@ void Enable_Load(void){
  * Disable Load when Load is active
  * Turn off Onboard LED
  */
-void Disable_Load(void){
+void Disable_Load(void)
+{
 	loadActive = 0;
 
 	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, RESET); // disengage relay
@@ -260,7 +284,8 @@ void Disable_Load(void){
  * Parse Received Data for ATSL
  *
  */
-uint32_t Parse_RxSLData(uint8_t data[]){
+uint32_t Parse_RxSLData(uint8_t data[])
+{
 	uint32_t address = 0;
     // Shift and merge the 4 bytes into a 32-bit integer
     address |= ((uint32_t)data[0] << 24);  // Most significant byte
