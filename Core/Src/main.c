@@ -45,7 +45,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,8 +58,8 @@
 /* USER CODE BEGIN PD */
 #define V_REF 3.3 // ADC reference voltage (Vref) in volts
 #define ADC_RESOLUTION 4096.0  // ADC resolution (12-bit gives values from 0 to 4095)
-#define SENSITIVITY 50.0  // TMCS1123B2A sensitivity (mV per Ampere, example: 50 mV/A)
-#define TxData_BUFFER_SIZE 6  // Transmission Buffer size
+#define SENSITIVITY 25.0  // TMCS1123B2A sensitivity (mV per Ampere, example: 50 mV/A)
+#define Data_BUFFER_SIZE 12  // Transmission Buffer size
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -70,12 +71,13 @@
 
 /* USER CODE BEGIN PV */
 ///////// XBee PV ////////////////////
-uint8_t txData[TxData_BUFFER_SIZE];   // Buffer to store XBee transmission
+uint8_t txData[Data_BUFFER_SIZE];   // Buffer to store XBee transmission
 uint8_t loadActive = 0;				 // Status for active Load
 volatile uint8_t data_received_flag = 0;  // Flag to indicate data reception
 uint8_t rxData;  /// Received data to process
 volatile uint8_t rxIndex = 0;   //iterating variable to store received data in buffer
-char rx_buffer[6];             // Buffer to store received data
+uint8_t rx_buffer[Data_BUFFER_SIZE];             // Buffer to store received data
+uint8_t TxRxData[Data_BUFFER_SIZE];
 
 //Xbee transmission dataframe
 uint32_t slAddress;				 // source low address
@@ -86,6 +88,9 @@ uint8_t Data;				   // Transmission data
 uint8_t txCurrentValue;		// Current Value to transmit over zigbee protoc
 uint32_t CurrentRead;		// Read current ADC value
 
+
+char serial_number[10] = {0};
+char response[10] = {0};
 
 //PWM PV for Sensor Diagnostics
 volatile uint32_t lastCapture = 0;
@@ -105,6 +110,10 @@ void Disable_Load(void);
 uint32_t Parse_RxSLData(uint8_t[]);
 uint32_t Read_ADC(void);
 uint8_t Calculate_Current(uint32_t);
+
+void enterCommandMode(void);
+void requestSerialNumberLow(void);
+void exitCommandMode(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -144,11 +153,18 @@ int main(void)
   MX_ADC1_Init();
   MX_USART1_UART_Init();
   MX_TIM2_Init();
-  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_TIM_Base_Start_IT(&htim1);
-  HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, 6);
+  HAL_TIM_Base_Start_IT(&htim2);
+  HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, sizeof(rx_buffer));
+
+	  //enterCommandMode();
+
+  // Request and store XBee Serial Number Low
+	 // requestSerialNumberLow();
+
+  // Exit command mode
+	 // exitCommandMode();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -158,8 +174,9 @@ int main(void)
 
 		if(data_received_flag)
 		{
+
 			// called parse received data
-			slAddress = Parse_RxSLData((uint8_t*)rx_buffer);
+			slAddress = Parse_RxSLData((char*)TxRxData);
 			Control = rx_buffer[4];   // extract command information
 			Data = rx_buffer[5];
 			if(Control == 0xC0){
@@ -181,7 +198,9 @@ int main(void)
 		}
 
 		CurrentRead = Read_ADC();
-		txCurrentValue = Calculate_Current(CurrentRead);
+		txCurrentValue = 0xF0;
+				//Calculate_Current(CurrentRead);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -211,8 +230,14 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
   RCC_OscInitStruct.MSIState = RCC_MSI_ON;
   RCC_OscInitStruct.MSICalibrationValue = 0;
-  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_8;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
+  RCC_OscInitStruct.PLL.PLLM = 1;
+  RCC_OscInitStruct.PLL.PLLN = 36;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
+  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
+  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -222,12 +247,12 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_MSI;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
   {
     Error_Handler();
   }
@@ -312,74 +337,102 @@ uint32_t Parse_RxSLData(uint8_t data[])
 
 
 }
+
+ void enterCommandMode(void)
+ {
+     char command_mode[4] = "+++";
+
+
+     // Send "+++" to enter AT command mode
+     HAL_UART_Transmit(&huart1, (uint8_t*)command_mode, strlen(command_mode), HAL_MAX_DELAY);
+     HAL_Delay(500);  // Small delay for XBee to respond
+
+     // Receive the "OK" response from XBee
+     HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, Data_BUFFER_SIZE);
+
+     if(data_received_flag){
+
+     }
+
+     // Check if response is "OK"
+     if (strstr(response, "OK") != NULL)
+     {
+         // Successfully entered command mode
+     }
+     else
+     {
+         // Failed to enter command mode
+     }
+ }
+
+ // Function to request XBee Serial Number Low (ATSL)
+ void requestSerialNumberLow(void)
+ {
+     char at_command[] = "ATSL\r";  // Command to request Serial Number Low
+     //char serial_number[20] = {0};  // Buffer to store the Serial Number Low
+
+     // Send the ATSL command
+     HAL_UART_Transmit(&huart1, (uint8_t*)at_command, strlen(at_command), HAL_MAX_DELAY);
+
+     // Receive the response (Serial Number Low)
+     HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, Data_BUFFER_SIZE);
+
+     // Store or process the received Serial Number Low
+     // Example: Print it via UART or store it in memory
+     printf("Serial Number Low: %s\r\n", serial_number);
+ }
+
+ // Function to exit XBee AT Command Mode
+ void exitCommandMode(void)
+ {
+     char exit_command[] = "ATCN\r";  // Command to exit AT command mode
+
+     // Send ATCN command to exit command mode
+     HAL_UART_Transmit(&huart1, (uint8_t*)exit_command, strlen(exit_command), HAL_MAX_DELAY);
+     HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, Data_BUFFER_SIZE);
+     rxIndex = 0;
+ }
  /*
   * Receive interrupt callback function
   */
 
  void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
  {
+     if (huart->Instance == USART1)  // Ensure it's USART1
+     {
+    	 data_received_flag = 1;    // Indicate data has been received
 
- 	if (__HAL_UART_GET_FLAG(&huart1, UART_FLAG_RXNE))  // Check if data is received
- 	    {
- 	        char received_char = (uint8_t)(huart1.Instance->RDR & 0xFF);  // Read the received character
- 	        if (rxIndex < sizeof(rx_buffer) - 1) {
- 	            rx_buffer[rxIndex++] = received_char;
- 	        }
+    	 memcpy(TxRxData, rx_buffer, Data_BUFFER_SIZE);  // Move the received data to the transmission buffer
+    	 memset(rx_buffer, 0, Data_BUFFER_SIZE); // Optionally clear the rx_buffer
 
- 	        // Check for newline or carriage return as end of response
- 	        if ((rxIndex == sizeof(rx_buffer)) || received_char == '\r') {
- 	            rx_buffer[rxIndex] = '\0';  // Null terminate the string
- 	            rxIndex = 0;
- 	            data_received_flag = 1;  // Set flag to indicate that data is fully received
- 	        }
+         HAL_UART_Receive_IT(&huart1, rx_buffer, Data_BUFFER_SIZE);   // Re-enable receiving more data
+     }
 
- 	    }
- 	 HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, 6);
+     // Handle Overrun Error
+     if (USART1->ISR & USART_ISR_ORE)
+     {
+         // Read status register to clear ORE flag
+         uint32_t temp = USART1->ISR;
+         // Read data register to clear the ORE flag
+         (void)USART1->RDR;
+         // Re-enable UART receive interrupt
+         HAL_UART_Receive_IT(&huart1, rx_buffer, Data_BUFFER_SIZE);
+     }
  }
 
  void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
  {
-   if (htim->Instance == TIM1)  // Check if the interrupt is from TIM1
+   if (htim->Instance == TIM2)  // Check if the interrupt is from TIM1
    {
-     /* Transmit current value after 1 min */
-	  HAL_UART_Transmit(&huart1, &txCurrentValue, sizeof(txCurrentValue), HAL_MAX_DELAY);
+     /* Transmit current value after .1 sec */
+	 //HAL_UART_Transmit(&huart1, &txCurrentValue, sizeof(txCurrentValue), HAL_MAX_DELAY);
+	   //HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
    }
  }
 
 
- /*
-  * Timer to measure duty cycle PMW input for Sensor Diagnostics from TMCS1123
-  * 100% -> No Fault
-  * 20% -> Thermal & Sensor Fault
-  * 50% -> Sensor Fault
-  * 80% -> Thermal fault
-  */
- void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
- {
-     if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2)
-     {
-         uint32_t captureValue = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
 
-         if (isRisingEdge) // Rising edge detected
-         {
-             pwmPeriod = captureValue - lastCapture;  // Calculate period
-             lastCapture = captureValue;
-             isRisingEdge = 0;  // Switch to falling edge
-             __HAL_TIM_SET_CAPTUREPOLARITY(htim, TIM_CHANNEL_2, TIM_INPUTCHANNELPOLARITY_FALLING);
-         }
-         else  // Falling edge detected
-         {
-             pwmHighTime = captureValue - lastCapture;  // High time (on time)
-             lastCapture = captureValue;
-             isRisingEdge = 1;  // Switch to rising edge
-             __HAL_TIM_SET_CAPTUREPOLARITY(htim, TIM_CHANNEL_2, TIM_INPUTCHANNELPOLARITY_RISING);
 
-             // Calculate Duty Cycle and Frequency
-             dutyCycle = ((float)pwmHighTime / (float)pwmPeriod) * 100.0;
-             frequency = HAL_RCC_GetPCLK1Freq() / (htim2.Init.Prescaler + 1) / pwmPeriod;
-         }
-     }
- }
 /* USER CODE END 4 */
 
 /**

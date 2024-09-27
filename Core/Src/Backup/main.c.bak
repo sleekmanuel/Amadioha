@@ -39,7 +39,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
-#include "spi.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -146,7 +145,6 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM2_Init();
   MX_TIM1_Init();
-  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_TIM_Base_Start_IT(&htim1);
@@ -344,7 +342,8 @@ uint32_t Parse_RxSLData(uint8_t data[])
    if (htim->Instance == TIM1)  // Check if the interrupt is from TIM1
    {
      /* Transmit current value after 1 min */
-	  HAL_UART_Transmit(&huart1, &txCurrentValue, sizeof(txCurrentValue), HAL_MAX_DELAY);
+	 // HAL_UART_Transmit(&huart1, &txCurrentValue, sizeof(txCurrentValue), HAL_MAX_DELAY);
+	   HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
    }
  }
 
