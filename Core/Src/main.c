@@ -59,7 +59,9 @@
 #define V_REF 3.3 // ADC reference voltage (Vref) in volts
 #define ADC_RESOLUTION 4096.0  // ADC resolution (12-bit gives values from 0 to 4095)
 #define SENSITIVITY 25.0  // TMCS1123B2A sensitivity (mV per Ampere, example: 50 mV/A)
-#define Data_BUFFER_SIZE 12  // Transmission Buffer size
+#define Data_BUFFER_SIZE 6   // Transmission Buffer size
+#define DEBOUNCE_DELAY_MS 50
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -71,13 +73,11 @@
 
 /* USER CODE BEGIN PV */
 ///////// XBee PV ////////////////////
-uint8_t txData[Data_BUFFER_SIZE];   // Buffer to store XBee transmission
+uint8_t TxData[Data_BUFFER_SIZE];   // Buffer to store XBee transmission
 uint8_t loadActive = 0;				 // Status for active Load
 volatile uint8_t data_received_flag = 0;  // Flag to indicate data reception
-uint8_t rxData;  /// Received data to process
-volatile uint8_t rxIndex = 0;   //iterating variable to store received data in buffer
 uint8_t rx_buffer[Data_BUFFER_SIZE];             // Buffer to store received data
-uint8_t TxRxData[Data_BUFFER_SIZE];
+uint8_t RxData[Data_BUFFER_SIZE];
 
 //Xbee transmission dataframe
 uint32_t slAddress;				 // source low address
@@ -91,6 +91,8 @@ uint32_t CurrentRead;		// Read current ADC value
 
 char serial_number[10] = {0};
 char response[10] = {0};
+
+volatile uint32_t lastDebounceTime = 0;
 
 //PWM PV for Sensor Diagnostics
 volatile uint32_t lastCapture = 0;
@@ -158,13 +160,13 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, sizeof(rx_buffer));
 
-	  //enterCommandMode();
+  //enterCommandMode();
 
-  // Request and store XBee Serial Number Low
-	 // requestSerialNumberLow();
+  //Request and store XBee Serial Number Low
+  //requestSerialNumberLow();
 
   // Exit command mode
-	 // exitCommandMode();
+ // exitCommandMode();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -176,9 +178,9 @@ int main(void)
 		{
 
 			// called parse received data
-			slAddress = Parse_RxSLData((char*)TxRxData);
-			Control = rx_buffer[4];   // extract command information
-			Data = rx_buffer[5];
+			slAddress = Parse_RxSLData((uint8_t*)RxData);
+			Control = RxData[4];   // extract command information
+			Data = RxData[5];
 			if(Control == 0xC0){
 				if(Data == 0x0F){
 					  if(loadActive){
@@ -186,7 +188,7 @@ int main(void)
 					  }else{
 						  Enable_Load();
 					  }
-				}else if(Data == 0x0F){
+				}else if(Data == 0x0A){
 					  if(loadActive){
 						  Disable_Load();
 					  }else{
@@ -325,61 +327,50 @@ uint32_t Parse_RxSLData(uint8_t data[])
 {
   /* Check if the power on button is pushed
    * if pushed when the load is active, it turns off the load and vice-versa
-   *  */
-  if((GPIO_Pin = Switch_Pin)){
-	  if(loadActive){
-		  Disable_Load();
-	  }else{
-		  Enable_Load();
-	  }
-
-  }
-
-
+  */
+	 if(GPIO_Pin == Switch_Pin)
+	     {
+	         /* Get the current time (in milliseconds) */
+	         uint32_t currentTime = HAL_GetTick(); // HAL_GetTick() returns the system time in ms
+	         /* Check if enough time has passed since the last press to consider this a valid press */
+	         if((currentTime - lastDebounceTime) >= DEBOUNCE_DELAY_MS)
+	         {
+	             /* Toggle the load state */
+	             if(loadActive)
+	             {
+	                 Disable_Load();
+	             }
+	             else
+	             {
+	                 Enable_Load();
+	             }
+	             /* Update the last debounce time */
+	             lastDebounceTime = currentTime;
+	         }
+	     }
 }
 
  void enterCommandMode(void)
  {
      char command_mode[4] = "+++";
-
-
      // Send "+++" to enter AT command mode
      HAL_UART_Transmit(&huart1, (uint8_t*)command_mode, strlen(command_mode), HAL_MAX_DELAY);
      HAL_Delay(500);  // Small delay for XBee to respond
-
      // Receive the "OK" response from XBee
      HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, Data_BUFFER_SIZE);
 
-     if(data_received_flag){
-
-     }
-
-     // Check if response is "OK"
-     if (strstr(response, "OK") != NULL)
-     {
-         // Successfully entered command mode
-     }
-     else
-     {
-         // Failed to enter command mode
-     }
  }
 
  // Function to request XBee Serial Number Low (ATSL)
  void requestSerialNumberLow(void)
  {
      char at_command[] = "ATSL\r";  // Command to request Serial Number Low
-     //char serial_number[20] = {0};  // Buffer to store the Serial Number Low
-
      // Send the ATSL command
      HAL_UART_Transmit(&huart1, (uint8_t*)at_command, strlen(at_command), HAL_MAX_DELAY);
-
      // Receive the response (Serial Number Low)
      HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, Data_BUFFER_SIZE);
 
-     // Store or process the received Serial Number Low
-     // Example: Print it via UART or store it in memory
-     printf("Serial Number Low: %s\r\n", serial_number);
+
  }
 
  // Function to exit XBee AT Command Mode
@@ -390,7 +381,7 @@ uint32_t Parse_RxSLData(uint8_t data[])
      // Send ATCN command to exit command mode
      HAL_UART_Transmit(&huart1, (uint8_t*)exit_command, strlen(exit_command), HAL_MAX_DELAY);
      HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, Data_BUFFER_SIZE);
-     rxIndex = 0;
+
  }
  /*
   * Receive interrupt callback function
@@ -402,7 +393,7 @@ uint32_t Parse_RxSLData(uint8_t data[])
      {
     	 data_received_flag = 1;    // Indicate data has been received
 
-    	 memcpy(TxRxData, rx_buffer, Data_BUFFER_SIZE);  // Move the received data to the transmission buffer
+    	 memcpy(RxData, rx_buffer, Data_BUFFER_SIZE);  // Move the received data to the transmission buffer
     	 memset(rx_buffer, 0, Data_BUFFER_SIZE); // Optionally clear the rx_buffer
 
          HAL_UART_Receive_IT(&huart1, rx_buffer, Data_BUFFER_SIZE);   // Re-enable receiving more data
