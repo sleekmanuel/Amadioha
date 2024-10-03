@@ -13,12 +13,12 @@
   * in the root directory of this software component.
   * If no LICENSE file comes with this software, it is provided AS-IS.
   *
-  *  ********************PROJECT DESCRIPTION********************
+ **********************PROJECT DESCRIPTION***********************************
   *  Firmware for smart light switch. Smart switch communicates with Hub to connecto to the internet
   *  Sends current value (mA) to hub via zigbee network
   *  Receives action command to turn on or off load from end device(motion sensor)
   *  also receives on and off command from Hub (interface from internet)
-  *
+  ******************************************************************************
   *
   *Receive Data frame via Zigbee Protocol
   *Receive 	RxData[6]
@@ -160,13 +160,13 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, sizeof(rx_buffer));
 
-  //enterCommandMode();
+  enterCommandMode();
 
   //Request and store XBee Serial Number Low
-  //requestSerialNumberLow();
+  requestSerialNumberLow();
 
   // Exit command mode
- // exitCommandMode();
+  exitCommandMode();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -355,9 +355,23 @@ uint32_t Parse_RxSLData(uint8_t data[])
      char command_mode[4] = "+++";
      // Send "+++" to enter AT command mode
      HAL_UART_Transmit(&huart1, (uint8_t*)command_mode, strlen(command_mode), HAL_MAX_DELAY);
-     HAL_Delay(500);  // Small delay for XBee to respond
+     HAL_Delay(1000);  // Small delay for XBee to respond
      // Receive the "OK" response from XBee
      HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, Data_BUFFER_SIZE);
+
+     if(data_received_flag){
+
+         }
+
+         // Check if response is "OK"
+         if (strstr(response, "OK") != NULL)
+         {
+             // Successfully entered command mode
+         }
+         else
+         {
+             // Failed to enter command mode
+         }
 
  }
 
@@ -403,11 +417,12 @@ uint32_t Parse_RxSLData(uint8_t data[])
      if (USART1->ISR & USART_ISR_ORE)
      {
          // Read status register to clear ORE flag
-         uint32_t temp = USART1->ISR;
+         uint8_t temp = USART1->ISR;
          // Read data register to clear the ORE flag
          (void)USART1->RDR;
          // Re-enable UART receive interrupt
          HAL_UART_Receive_IT(&huart1, rx_buffer, Data_BUFFER_SIZE);
+
      }
  }
 
