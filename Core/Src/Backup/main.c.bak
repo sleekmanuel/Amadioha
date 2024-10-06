@@ -13,12 +13,12 @@
   * in the root directory of this software component.
   * If no LICENSE file comes with this software, it is provided AS-IS.
   *
-  *  ********************PROJECT DESCRIPTION********************
+ **********************PROJECT DESCRIPTION***********************************
   *  Firmware for smart light switch. Smart switch communicates with Hub to connecto to the internet
   *  Sends current value (mA) to hub via zigbee network
   *  Receives action command to turn on or off load from end device(motion sensor)
   *  also receives on and off command from Hub (interface from internet)
-  *
+  ******************************************************************************
   *
   *Receive Data frame via Zigbee Protocol
   *Receive 	RxData[6]
@@ -45,7 +45,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,8 +58,11 @@
 /* USER CODE BEGIN PD */
 #define V_REF 3.3 // ADC reference voltage (Vref) in volts
 #define ADC_RESOLUTION 4096.0  // ADC resolution (12-bit gives values from 0 to 4095)
-#define SENSITIVITY 50.0  // TMCS1123B2A sensitivity (mV per Ampere, example: 50 mV/A)
-#define TxData_BUFFER_SIZE 6  // Transmission Buffer size
+#define SENSITIVITY 100.0  // TMCS1123B2A sensitivity (mV per Ampere, example: 50 mV/A)
+#define Data_BUFFER_SIZE 6   // Transmission Buffer size
+#define DEBOUNCE_DELAY_MS 50
+#define TX_BUFFER_SIZE 1
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -70,12 +74,11 @@
 
 /* USER CODE BEGIN PV */
 ///////// XBee PV ////////////////////
-uint8_t txData[TxData_BUFFER_SIZE];   // Buffer to store XBee transmission
+uint8_t TxData[Data_BUFFER_SIZE];   // Buffer to store XBee transmission
 uint8_t loadActive = 0;				 // Status for active Load
 volatile uint8_t data_received_flag = 0;  // Flag to indicate data reception
-uint8_t rxData;  /// Received data to process
-volatile uint8_t rxIndex = 0;   //iterating variable to store received data in buffer
-char rx_buffer[6];             // Buffer to store received data
+uint8_t rx_buffer[Data_BUFFER_SIZE];             // Buffer to store received data
+uint8_t RxData[Data_BUFFER_SIZE];
 
 //Xbee transmission dataframe
 uint32_t slAddress;				 // source low address
@@ -84,8 +87,14 @@ uint8_t Data;				   // Transmission data
 
 //ADC PV for Current reading
 uint8_t txCurrentValue;		// Current Value to transmit over zigbee protoc
-uint32_t CurrentRead;		// Read current ADC value
+float CurrentRead;		// Read current ADC value
 
+volatile uint16_t adcValue;
+
+char serial_number[10] = {0};
+char response[10] = {0};
+
+volatile uint32_t lastDebounceTime = 0;
 
 //PWM PV for Sensor Diagnostics
 volatile uint32_t lastCapture = 0;
@@ -103,8 +112,12 @@ void SystemClock_Config(void);
 void Enable_Load(void);
 void Disable_Load(void);
 uint32_t Parse_RxSLData(uint8_t[]);
-uint32_t Read_ADC(void);
+float Read_ADC(void);
 uint8_t Calculate_Current(uint32_t);
+
+void enterCommandMode(void);
+void requestSerialNumberLow(void);
+void exitCommandMode(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -144,11 +157,18 @@ int main(void)
   MX_ADC1_Init();
   MX_USART1_UART_Init();
   MX_TIM2_Init();
-  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_TIM_Base_Start_IT(&htim1);
-  HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, 6);
+  HAL_TIM_Base_Start_IT(&htim2);
+  HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, sizeof(rx_buffer));
+
+  //enterCommandMode();
+
+  //Request and store XBee Serial Number Low
+ // requestSerialNumberLow();
+
+  // Exit command mode
+ // exitCommandMode();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -158,10 +178,11 @@ int main(void)
 
 		if(data_received_flag)
 		{
+
 			// called parse received data
-			slAddress = Parse_RxSLData((uint8_t*)rx_buffer);
-			Control = rx_buffer[4];   // extract command information
-			Data = rx_buffer[5];
+			slAddress = Parse_RxSLData((uint8_t*)RxData);
+			Control = RxData[4];   // extract command information
+			Data = RxData[5];
 			if(Control == 0xC0){
 				if(Data == 0x0F){
 					  if(loadActive){
@@ -169,7 +190,7 @@ int main(void)
 					  }else{
 						  Enable_Load();
 					  }
-				}else if(Data == 0x0F){
+				}else if(Data == 0x0A){
 					  if(loadActive){
 						  Disable_Load();
 					  }else{
@@ -180,8 +201,11 @@ int main(void)
 			data_received_flag = 0;  // resets received status to expect new data
 		}
 
+		HAL_GPIO_WritePin(GPIOA, Sense_CuttOff_Pin, GPIO_PIN_SET);
 		CurrentRead = Read_ADC();
-		txCurrentValue = Calculate_Current(CurrentRead);
+
+				//Calculate_Current(CurrentRead);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -211,8 +235,14 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
   RCC_OscInitStruct.MSIState = RCC_MSI_ON;
   RCC_OscInitStruct.MSICalibrationValue = 0;
-  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_8;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
+  RCC_OscInitStruct.PLL.PLLM = 1;
+  RCC_OscInitStruct.PLL.PLLN = 36;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
+  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
+  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -222,12 +252,12 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_MSI;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
   {
     Error_Handler();
   }
@@ -236,28 +266,22 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 
 // Function to read ADC value
-uint32_t Read_ADC(void)
+float Read_ADC(void)
 {
     HAL_ADC_Start(&hadc1);  // Start ADC conversion
     HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);  // Wait for conversion to finish
-    uint32_t adcValue = HAL_ADC_GetValue(&hadc1);  // Get the ADC value
-    HAL_ADC_Stop(&hadc1);  // Stop the ADC
-    return adcValue;
-}
+     adcValue = HAL_ADC_GetValue(&hadc1);  // Get the ADC value
 
-// Function to calculate current based on ADC value
-uint8_t Calculate_Current(uint32_t adcValue)
-{
-    // Convert ADC value to voltage
-    float voltage = (adcValue * V_REF) / ADC_RESOLUTION;
-    // Sensor outputs 0.5 * Vcc at zero current
-    float zeroCurrentVoltage = V_REF / 2.0;
+    volatile float voltage = (adcValue / ADC_RESOLUTION) * 3.3;  // Convert ADC value to voltage
+    float zeroCurrentVoltage = V_REF / 2.0;      // Sensor outputs 0.5 * Vcc at zero current
     // Calculate current using sensor sensitivity (mV/A)
-    float current = (voltage - zeroCurrentVoltage) * 1000 / SENSITIVITY;  // in Amps
-    uint8_t mAmps = current * 1000; //current in mA
+    float current = (voltage - zeroCurrentVoltage) / SENSITIVITY;  // in Amps
 
-    return mAmps;
+
+    return voltage;
 }
+
+
 /*
  * Enable Load when Load is disabled
  * Turn on Onboard LED
@@ -300,87 +324,118 @@ uint32_t Parse_RxSLData(uint8_t data[])
 {
   /* Check if the power on button is pushed
    * if pushed when the load is active, it turns off the load and vice-versa
-   *  */
-  if((GPIO_Pin = Switch_Pin)){
-	  if(loadActive){
-		  Disable_Load();
-	  }else{
-		  Enable_Load();
-	  }
-
-  }
-
-
+  */
+	 if(GPIO_Pin == Switch_Pin)
+	     {
+	         /* Get the current time (in milliseconds) */
+	         uint32_t currentTime = HAL_GetTick(); // HAL_GetTick() returns the system time in ms
+	         /* Check if enough time has passed since the last press to consider this a valid press */
+	         if((currentTime - lastDebounceTime) >= DEBOUNCE_DELAY_MS)
+	         {
+	             /* Toggle the load state */
+	             if(loadActive)
+	             {
+	                 Disable_Load();
+	             }
+	             else
+	             {
+	                 Enable_Load();
+	             }
+	             /* Update the last debounce time */
+	             lastDebounceTime = currentTime;
+	         }
+	     }
 }
+
+ void enterCommandMode(void)
+ {
+     char command_mode[4] = "+++";
+     // Send "+++" to enter AT command mode
+     HAL_UART_Transmit(&huart1, (uint8_t*)command_mode, strlen(command_mode), HAL_MAX_DELAY);
+     HAL_Delay(1000);  // Small delay for XBee to respond
+     // Receive the "OK" response from XBee
+     HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, Data_BUFFER_SIZE);
+
+     if(data_received_flag){
+
+         }
+
+         // Check if response is "OK"
+         if (strstr(response, "OK") != NULL)
+         {
+             // Successfully entered command mode
+         }
+         else
+         {
+             // Failed to enter command mode
+         }
+
+ }
+
+ // Function to request XBee Serial Number Low (ATSL)
+ void requestSerialNumberLow(void)
+ {
+     char at_command[] = "ATSL\r";  // Command to request Serial Number Low
+     // Send the ATSL command
+     HAL_UART_Transmit(&huart1, (uint8_t*)at_command, strlen(at_command), HAL_MAX_DELAY);
+     // Receive the response (Serial Number Low)
+     HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, Data_BUFFER_SIZE);
+
+
+ }
+
+ // Function to exit XBee AT Command Mode
+ void exitCommandMode(void)
+ {
+     char exit_command[] = "ATCN\r";  // Command to exit AT command mode
+
+     // Send ATCN command to exit command mode
+     HAL_UART_Transmit(&huart1, (uint8_t*)exit_command, strlen(exit_command), HAL_MAX_DELAY);
+     HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, Data_BUFFER_SIZE);
+
+ }
  /*
   * Receive interrupt callback function
   */
 
  void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
  {
+     if (huart->Instance == USART1)  // Ensure it's USART1
+     {
+    	 data_received_flag = 1;    // Indicate data has been received
 
- 	if (__HAL_UART_GET_FLAG(&huart1, UART_FLAG_RXNE))  // Check if data is received
- 	    {
- 	        char received_char = (uint8_t)(huart1.Instance->RDR & 0xFF);  // Read the received character
- 	        if (rxIndex < sizeof(rx_buffer) - 1) {
- 	            rx_buffer[rxIndex++] = received_char;
- 	        }
+    	 memcpy(RxData, rx_buffer, Data_BUFFER_SIZE);  // Move the received data to the transmission buffer
+    	 memset(rx_buffer, 0, Data_BUFFER_SIZE); // Optionally clear the rx_buffer
 
- 	        // Check for newline or carriage return as end of response
- 	        if ((rxIndex == sizeof(rx_buffer)) || received_char == '\r') {
- 	            rx_buffer[rxIndex] = '\0';  // Null terminate the string
- 	            rxIndex = 0;
- 	            data_received_flag = 1;  // Set flag to indicate that data is fully received
- 	        }
+         HAL_UART_Receive_IT(&huart1, rx_buffer, Data_BUFFER_SIZE);   // Re-enable receiving more data
+     }
 
- 	    }
- 	 HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, 6);
+     // Handle Overrun Error
+     if (USART1->ISR & USART_ISR_ORE)
+     {
+         // Read status register to clear ORE flag
+         uint8_t temp = USART1->ISR;
+         // Read data register to clear the ORE flag
+         (void)USART1->RDR;
+         // Re-enable UART receive interrupt
+         HAL_UART_Receive_IT(&huart1, rx_buffer, Data_BUFFER_SIZE);
+
+     }
  }
 
  void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
  {
-   if (htim->Instance == TIM1)  // Check if the interrupt is from TIM1
+   if (htim->Instance == TIM2)  // Check if the interrupt is from TIM1
    {
-     /* Transmit current value after 1 min */
-	 // HAL_UART_Transmit(&huart1, &txCurrentValue, sizeof(txCurrentValue), HAL_MAX_DELAY);
-	   HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+     /* Transmit current value after .1 sec */
+	 //HAL_UART_Transmit(&huart1, &txCurrentValue, sizeof(txCurrentValue), HAL_MAX_DELAY);
+	   //HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
    }
  }
 
 
- /*
-  * Timer to measure duty cycle PMW input for Sensor Diagnostics from TMCS1123
-  * 100% -> No Fault
-  * 20% -> Thermal & Sensor Fault
-  * 50% -> Sensor Fault
-  * 80% -> Thermal fault
-  */
- void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
- {
-     if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2)
-     {
-         uint32_t captureValue = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
 
-         if (isRisingEdge) // Rising edge detected
-         {
-             pwmPeriod = captureValue - lastCapture;  // Calculate period
-             lastCapture = captureValue;
-             isRisingEdge = 0;  // Switch to falling edge
-             __HAL_TIM_SET_CAPTUREPOLARITY(htim, TIM_CHANNEL_2, TIM_INPUTCHANNELPOLARITY_FALLING);
-         }
-         else  // Falling edge detected
-         {
-             pwmHighTime = captureValue - lastCapture;  // High time (on time)
-             lastCapture = captureValue;
-             isRisingEdge = 1;  // Switch to rising edge
-             __HAL_TIM_SET_CAPTUREPOLARITY(htim, TIM_CHANNEL_2, TIM_INPUTCHANNELPOLARITY_RISING);
 
-             // Calculate Duty Cycle and Frequency
-             dutyCycle = ((float)pwmHighTime / (float)pwmPeriod) * 100.0;
-             frequency = HAL_RCC_GetPCLK1Freq() / (htim2.Init.Prescaler + 1) / pwmPeriod;
-         }
-     }
- }
 /* USER CODE END 4 */
 
 /**

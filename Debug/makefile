@@ -61,7 +61,7 @@ main-build: Amadioha.elf secondary-outputs
 
 # Tool invocations
 Amadioha.elf Amadioha.map: $(OBJS) $(USER_OBJS) /private/var/root/STM32CubeIDE/workspace_1.16.0/Amadioha/STM32L432KBUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Amadioha.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/private/var/root/STM32CubeIDE/workspace_1.16.0/Amadioha/STM32L432KBUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Amadioha.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+	arm-none-eabi-gcc -o "Amadioha.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/private/var/root/STM32CubeIDE/workspace_1.16.0/Amadioha/STM32L432KBUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Amadioha.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
