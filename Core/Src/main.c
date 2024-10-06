@@ -43,10 +43,12 @@
 #include "usart.h"
 #include "gpio.h"
 
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <string.h>
+#include "math.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,10 +59,11 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define V_REF 3.3 // ADC reference voltage (Vref) in volts
-#define ADC_RESOLUTION 4096.0  // ADC resolution (12-bit gives values from 0 to 4095)
-#define SENSITIVITY 25.0  // TMCS1123B2A sensitivity (mV per Ampere, example: 50 mV/A)
+#define ADC_RESOLUTION 4095.0  // ADC resolution (12-bit gives values from 0 to 4095)
+#define SENSITIVITY 0.1  // TMCS1123B2A sensitivity (mV per Ampere, example: 50 mV/A)
 #define Data_BUFFER_SIZE 6   // Transmission Buffer size
 #define DEBOUNCE_DELAY_MS 50
+#define TX_BUFFER_SIZE 1
 
 /* USER CODE END PD */
 
@@ -86,8 +89,10 @@ uint8_t Data;				   // Transmission data
 
 //ADC PV for Current reading
 uint8_t txCurrentValue;		// Current Value to transmit over zigbee protoc
-uint32_t CurrentRead;		// Read current ADC value
 
+float currentRMS = 0;  // Read current RMS value
+
+volatile uint16_t adcValue;
 
 char serial_number[10] = {0};
 char response[10] = {0};
@@ -102,6 +107,8 @@ volatile float dutyCycle = 0;
 volatile float frequency = 0;
 volatile uint8_t isRisingEdge = 1;
 
+char buffer[10];
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -110,8 +117,9 @@ void SystemClock_Config(void);
 void Enable_Load(void);
 void Disable_Load(void);
 uint32_t Parse_RxSLData(uint8_t[]);
-uint32_t Read_ADC(void);
-uint8_t Calculate_Current(uint32_t);
+float Read_ADC(void);
+//uint8_t Calculate_Current(uint32_t);
+float Calculate_RMS(float samples[], int sampleCount);
 
 void enterCommandMode(void);
 void requestSerialNumberLow(void);
@@ -160,13 +168,17 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, sizeof(rx_buffer));
 
-  enterCommandMode();
+  //enterCommandMode();
 
   //Request and store XBee Serial Number Low
-  requestSerialNumberLow();
+ // requestSerialNumberLow();
 
   // Exit command mode
-  exitCommandMode();
+ // exitCommandMode();
+
+  const int SAMPLE_COUNT = 250; // Number of samples to take for RMS
+  float samples[SAMPLE_COUNT];
+  HAL_GPIO_WritePin(GPIOA, Sense_CuttOff_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -176,7 +188,6 @@ int main(void)
 
 		if(data_received_flag)
 		{
-
 			// called parse received data
 			slAddress = Parse_RxSLData((uint8_t*)RxData);
 			Control = RxData[4];   // extract command information
@@ -196,13 +207,21 @@ int main(void)
 					  }
 				}
 			}
+			else if(Control == 0xFF){
+				if(Data == 0x01){
+					//Take sample of 500 current readings
+					for (int i = 0; i < SAMPLE_COUNT; i++) {
+							samples[i] = Read_ADC();
+							HAL_Delay(1);
+					}
+					currentRMS = Calculate_RMS(samples, SAMPLE_COUNT); // Calculate the RMS value
+
+				    sprintf(buffer, "%.2f", currentRMS);  // Format float to a string
+				    HAL_UART_Transmit(&huart1, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
+				}
+			}
 			data_received_flag = 0;  // resets received status to expect new data
 		}
-
-		CurrentRead = Read_ADC();
-		txCurrentValue = 0xF0;
-				//Calculate_Current(CurrentRead);
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -263,28 +282,32 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 
 // Function to read ADC value
-uint32_t Read_ADC(void)
+float Read_ADC(void)
 {
     HAL_ADC_Start(&hadc1);  // Start ADC conversion
     HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);  // Wait for conversion to finish
-    uint32_t adcValue = HAL_ADC_GetValue(&hadc1);  // Get the ADC value
-    HAL_ADC_Stop(&hadc1);  // Stop the ADC
-    return adcValue;
-}
+     adcValue = HAL_ADC_GetValue(&hadc1);  // Get the ADC value
 
-// Function to calculate current based on ADC value
-uint8_t Calculate_Current(uint32_t adcValue)
-{
-    // Convert ADC value to voltage
-    float voltage = (adcValue * V_REF) / ADC_RESOLUTION;
-    // Sensor outputs 0.5 * Vcc at zero current
-    float zeroCurrentVoltage = V_REF / 2.0;
+    volatile float voltage = (adcValue / ADC_RESOLUTION) * 3.3;  // Convert ADC value to voltage
+    float zeroCurrentVoltage = V_REF / 2.0;      // Sensor outputs 0.5 * Vcc at zero current
     // Calculate current using sensor sensitivity (mV/A)
-    float current = (voltage - zeroCurrentVoltage) * 1000 / SENSITIVITY;  // in Amps
-    uint8_t mAmps = current * 1000; //current in mA
+    float current = (voltage - zeroCurrentVoltage) / SENSITIVITY;  // in Amps
 
-    return mAmps;
+
+    return current;
 }
+// Function to calculate the RMS value of the sampled current
+float Calculate_RMS(float samples[], int sampleCount) {
+    float sumSquares = 0;
+
+    for (int i = 0; i < sampleCount; i++) {
+        sumSquares += samples[i] * samples[i];
+    }
+
+    // Return the square root of the mean of the squares (RMS value)
+    return sqrt(sumSquares / sampleCount);
+}
+
 /*
  * Enable Load when Load is disabled
  * Turn on Onboard LED
@@ -386,7 +409,6 @@ uint32_t Parse_RxSLData(uint8_t data[])
 
 
  }
-
  // Function to exit XBee AT Command Mode
  void exitCommandMode(void)
  {
@@ -417,7 +439,7 @@ uint32_t Parse_RxSLData(uint8_t data[])
      if (USART1->ISR & USART_ISR_ORE)
      {
          // Read status register to clear ORE flag
-         uint8_t temp = USART1->ISR;
+        // uint8_t temp = USART1->ISR;
          // Read data register to clear the ORE flag
          (void)USART1->RDR;
          // Re-enable UART receive interrupt
@@ -431,7 +453,7 @@ uint32_t Parse_RxSLData(uint8_t data[])
    if (htim->Instance == TIM2)  // Check if the interrupt is from TIM1
    {
      /* Transmit current value after .1 sec */
-	 //HAL_UART_Transmit(&huart1, &txCurrentValue, sizeof(txCurrentValue), HAL_MAX_DELAY);
+
 	   //HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
    }
  }
