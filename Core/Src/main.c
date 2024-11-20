@@ -220,7 +220,9 @@ int main(void)
 				    HAL_UART_Transmit(&huart1, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
 				}
 			}
+
 			data_received_flag = 0;  // resets received status to expect new data
+			HAL_UART_Receive_IT(&huart1, rx_buffer, Data_BUFFER_SIZE);
 		}
     /* USER CODE END WHILE */
 
@@ -432,6 +434,7 @@ uint32_t Parse_RxSLData(uint8_t data[])
     	 memcpy(RxData, rx_buffer, Data_BUFFER_SIZE);  // Move the received data to the transmission buffer
     	 memset(rx_buffer, 0, Data_BUFFER_SIZE); // Optionally clear the rx_buffer
 
+    	 HAL_UART_Transmit(&huart1, "Data Received\n", 14, HAL_MAX_DELAY);
          HAL_UART_Receive_IT(&huart1, rx_buffer, Data_BUFFER_SIZE);   // Re-enable receiving more data
      }
 
@@ -439,7 +442,8 @@ uint32_t Parse_RxSLData(uint8_t data[])
      if (USART1->ISR & USART_ISR_ORE)
      {
          // Read status register to clear ORE flag
-        // uint8_t temp = USART1->ISR;
+         (void)USART1->ISR;  // Read status register
+
          // Read data register to clear the ORE flag
          (void)USART1->RDR;
          // Re-enable UART receive interrupt
