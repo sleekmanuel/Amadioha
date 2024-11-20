@@ -78,9 +78,12 @@
 ///////// XBee PV ////////////////////
 uint8_t TxData[Data_BUFFER_SIZE];   // Buffer to store XBee transmission
 uint8_t loadActive = 0;				 // Status for active Load
+uint8_t previousLoadActive = 0;		// Store previous load state
 volatile uint8_t data_received_flag = 0;  // Flag to indicate data reception
 uint8_t rx_buffer[Data_BUFFER_SIZE];             // Buffer to store received data
 uint8_t RxData[Data_BUFFER_SIZE];
+uint8_t Load_Active[6] = {0x42, 0x26, 0x7F, 0x1C, 0xB3, 0x11};	// load active feedback
+uint8_t Load_Inactive[6] = {0x42, 0x26, 0x7F, 0x1C, 0xB3, 0xAA}; // load inactive feedback
 
 //Xbee transmission dataframe
 uint32_t slAddress;				 // source low address
@@ -116,6 +119,7 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 void Enable_Load(void);
 void Disable_Load(void);
+void CheckAndTransmitLoadChange(void);
 uint32_t Parse_RxSLData(uint8_t[]);
 float Read_ADC(void);
 //uint8_t Calculate_Current(uint32_t);
@@ -309,6 +313,20 @@ float Calculate_RMS(float samples[], int sampleCount) {
     // Return the square root of the mean of the squares (RMS value)
     return sqrt(sumSquares / sampleCount);
 }
+// Transmit 0xFE when loadActive changes
+void CheckAndTransmitLoadChange(void) {
+    if (loadActive != previousLoadActive) {
+
+        if(loadActive){
+        	 HAL_UART_Transmit(&huart1, Load_Active, 6, HAL_MAX_DELAY);
+        }else
+        {
+        	 HAL_UART_Transmit(&huart1, Load_Inactive, 6, HAL_MAX_DELAY);
+        }
+        // Update the previous state
+        previousLoadActive = loadActive;
+    }
+}
 
 /*
  * Enable Load when Load is disabled
@@ -320,6 +338,7 @@ void Enable_Load(void)
 
 	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, SET); //engage relay
 	HAL_GPIO_WritePin(GPIOA, VBase_Pin, SET); // turn on LEDs
+	CheckAndTransmitLoadChange();
 }
 /*
  * Disable Load when Load is active
@@ -331,6 +350,7 @@ void Disable_Load(void)
 
 	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, RESET); // disengage relay
 	HAL_GPIO_WritePin(GPIOA, VBase_Pin, RESET); // turn off LEDs
+	CheckAndTransmitLoadChange();
 }
 /*
  * Parse Received Data for ATSL
