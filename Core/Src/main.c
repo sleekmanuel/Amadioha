@@ -86,8 +86,8 @@ volatile uint8_t data_received_flag = 0;  // Flag to indicate data reception
 uint8_t rx_buffer[Data_BUFFER_SIZE];             // Buffer to store received data
 uint8_t RxData[6];
 uint8_t received_byte;		  // Process UART_Rx by byte
-uint8_t Load_Active[6] = {0x42, 0x26, 0x80, 0x0E, 0xB3, 0x11};	// load active feedback
-uint8_t Load_Inactive[6] = {0x42, 0x26, 0x80, 0x0E, 0xB3, 0xAA}; // load inactive feedback
+uint8_t Load_Active[11] = {0x34, 0x32, 0x32, 0x36, 0x38, 0x30, 0x30, 0x45, 0xB3, 0x11, 0x0D};	// load active feedback
+uint8_t Load_Inactive[11] = {0x34, 0x32, 0x32, 0x36, 0x38, 0x30, 0x30, 0x45, 0xB3, 0xAA, 0x0D}; // load inactive feedback
 
 //Xbee transmission dataframe
 uint32_t slAddress;				 // source low address
@@ -182,7 +182,7 @@ int main(void)
 
 
   //Request and store XBee Serial Number Low
-  //requestSerialNumberLow();
+  requestSerialNumberLow();
   //requestDestNumberLow();
   //setDestinationAddress(0x000000, 0x00FFFF);
   //writeCommand();
@@ -200,14 +200,14 @@ int main(void)
   while (1)
   {
 
-		if(data_received_flag)
-		{
-		    memcpy(RxData, rx_buffer, 6);  // Move the received data to the transmission buffer
+	if(data_received_flag)
+	{
+		  //Check if the message is meant for me
+		  if(memcmp(mySerialLow, rx_buffer, 8) == 0)
+		  {
 		    data_received_flag = 0; //reset receive flag
-			// called parse received data
-			slAddress = Parse_RxSLData((uint8_t*)RxData);
-			Control = RxData[4];   // extract command information
-			Data = RxData[5];
+			Control = rx_buffer[8];   // extract command information
+			Data = rx_buffer[9];
 			if(Control == 0xC0){
 				if(Data == 0x0F){
 					  if(loadActive){
@@ -236,10 +236,10 @@ int main(void)
 				    HAL_UART_Transmit(&huart1, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
 				}
 			}
+		  }
 			memset(rx_buffer, 0, Data_BUFFER_SIZE);
-			memset(RxData, 0, 6);
 			HAL_UART_Receive_IT(&huart1, &received_byte, 1);  // Continue receiving
-		}
+	}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -333,9 +333,9 @@ void CheckAndTransmitLoadChange(void) {
     	//setDestinationAddress(ADDRESS_HIGH, 0x4226800E);
     	  // HAL_Delay(1000);
         if (loadActive) {
-            HAL_UART_Transmit(&huart1, Load_Active, 6, HAL_MAX_DELAY);  // Send "load active" message
+            HAL_UART_Transmit(&huart1, Load_Active, 11, HAL_MAX_DELAY);  // Send "load active" message
         } else {
-            HAL_UART_Transmit(&huart1, Load_Inactive, 6, HAL_MAX_DELAY);  // Send "load inactive" message
+            HAL_UART_Transmit(&huart1, Load_Inactive, 11, HAL_MAX_DELAY);  // Send "load inactive" message
         }
 
         // Reset destination address to default broadcast address
@@ -454,6 +454,9 @@ uint32_t Parse_RxSLData(uint8_t data[])
      // Send ATCN command to exit command mode
      HAL_UART_Transmit(&huart1, (uint8_t*)exit_command, strlen(exit_command), HAL_MAX_DELAY);
      HAL_UART_Receive_IT(&huart1, &received_byte, 1);
+     while(!data_received_flag); //wait for Rx to complete
+     data_received_flag = 0;
+     memset(rx_buffer, 0, Data_BUFFER_SIZE);
  }
  // Function to request XBee Serial Number Low (ATSL)
  void requestDestNumberLow(void)
