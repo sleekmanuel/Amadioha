@@ -1836,126 +1836,126 @@ int main(void)
  80012ea:	f007 f8a7 	bl	800843c <memcmp>
  80012ee:	4603      	mov	r3, r0
  80012f0:	2b00      	cmp	r3, #0
- 80012f2:	d162      	bne.n	80013ba <main+0x176>
+ 80012f2:	d15f      	bne.n	80013b4 <main+0x170>
 		  {
-		    data_received_flag = 0; //reset receive flag
- 80012f4:	4b39      	ldr	r3, [pc, #228]	@ (80013dc <main+0x198>)
- 80012f6:	2200      	movs	r2, #0
- 80012f8:	701a      	strb	r2, [r3, #0]
 			Control = rx_buffer[8];   // extract command information
- 80012fa:	4b39      	ldr	r3, [pc, #228]	@ (80013e0 <main+0x19c>)
- 80012fc:	7a1a      	ldrb	r2, [r3, #8]
- 80012fe:	4b3a      	ldr	r3, [pc, #232]	@ (80013e8 <main+0x1a4>)
- 8001300:	701a      	strb	r2, [r3, #0]
+ 80012f4:	4b3a      	ldr	r3, [pc, #232]	@ (80013e0 <main+0x19c>)
+ 80012f6:	7a1a      	ldrb	r2, [r3, #8]
+ 80012f8:	4b3b      	ldr	r3, [pc, #236]	@ (80013e8 <main+0x1a4>)
+ 80012fa:	701a      	strb	r2, [r3, #0]
 			Data = rx_buffer[9];
- 8001302:	4b37      	ldr	r3, [pc, #220]	@ (80013e0 <main+0x19c>)
- 8001304:	7a5a      	ldrb	r2, [r3, #9]
- 8001306:	4b39      	ldr	r3, [pc, #228]	@ (80013ec <main+0x1a8>)
- 8001308:	701a      	strb	r2, [r3, #0]
+ 80012fc:	4b38      	ldr	r3, [pc, #224]	@ (80013e0 <main+0x19c>)
+ 80012fe:	7a5a      	ldrb	r2, [r3, #9]
+ 8001300:	4b3a      	ldr	r3, [pc, #232]	@ (80013ec <main+0x1a8>)
+ 8001302:	701a      	strb	r2, [r3, #0]
 			if(Control == 0xC0){
- 800130a:	4b37      	ldr	r3, [pc, #220]	@ (80013e8 <main+0x1a4>)
- 800130c:	781b      	ldrb	r3, [r3, #0]
- 800130e:	2bc0      	cmp	r3, #192	@ 0xc0
- 8001310:	d115      	bne.n	800133e <main+0xfa>
+ 8001304:	4b38      	ldr	r3, [pc, #224]	@ (80013e8 <main+0x1a4>)
+ 8001306:	781b      	ldrb	r3, [r3, #0]
+ 8001308:	2bc0      	cmp	r3, #192	@ 0xc0
+ 800130a:	d115      	bne.n	8001338 <main+0xf4>
 				if(Data == 0x0F){
- 8001312:	4b36      	ldr	r3, [pc, #216]	@ (80013ec <main+0x1a8>)
- 8001314:	781b      	ldrb	r3, [r3, #0]
- 8001316:	2b0f      	cmp	r3, #15
- 8001318:	d106      	bne.n	8001328 <main+0xe4>
+ 800130c:	4b37      	ldr	r3, [pc, #220]	@ (80013ec <main+0x1a8>)
+ 800130e:	781b      	ldrb	r3, [r3, #0]
+ 8001310:	2b0f      	cmp	r3, #15
+ 8001312:	d106      	bne.n	8001322 <main+0xde>
 					  if(loadActive){
- 800131a:	4b35      	ldr	r3, [pc, #212]	@ (80013f0 <main+0x1ac>)
- 800131c:	781b      	ldrb	r3, [r3, #0]
- 800131e:	2b00      	cmp	r3, #0
- 8001320:	d14b      	bne.n	80013ba <main+0x176>
+ 8001314:	4b36      	ldr	r3, [pc, #216]	@ (80013f0 <main+0x1ac>)
+ 8001316:	781b      	ldrb	r3, [r3, #0]
+ 8001318:	2b00      	cmp	r3, #0
+ 800131a:	d14b      	bne.n	80013b4 <main+0x170>
 						  ;
 					  }else{
 						  Enable_Load();
- 8001322:	f000 f997 	bl	8001654 <Enable_Load>
- 8001326:	e048      	b.n	80013ba <main+0x176>
+ 800131c:	f000 f99a 	bl	8001654 <Enable_Load>
+ 8001320:	e048      	b.n	80013b4 <main+0x170>
 					  }
 				}else if(Data == 0x0A){
- 8001328:	4b30      	ldr	r3, [pc, #192]	@ (80013ec <main+0x1a8>)
- 800132a:	781b      	ldrb	r3, [r3, #0]
- 800132c:	2b0a      	cmp	r3, #10
- 800132e:	d144      	bne.n	80013ba <main+0x176>
+ 8001322:	4b32      	ldr	r3, [pc, #200]	@ (80013ec <main+0x1a8>)
+ 8001324:	781b      	ldrb	r3, [r3, #0]
+ 8001326:	2b0a      	cmp	r3, #10
+ 8001328:	d144      	bne.n	80013b4 <main+0x170>
 					  if(loadActive){
- 8001330:	4b2f      	ldr	r3, [pc, #188]	@ (80013f0 <main+0x1ac>)
- 8001332:	781b      	ldrb	r3, [r3, #0]
- 8001334:	2b00      	cmp	r3, #0
- 8001336:	d040      	beq.n	80013ba <main+0x176>
+ 800132a:	4b31      	ldr	r3, [pc, #196]	@ (80013f0 <main+0x1ac>)
+ 800132c:	781b      	ldrb	r3, [r3, #0]
+ 800132e:	2b00      	cmp	r3, #0
+ 8001330:	d040      	beq.n	80013b4 <main+0x170>
 						  Disable_Load();
- 8001338:	f000 f9a4 	bl	8001684 <Disable_Load>
- 800133c:	e03d      	b.n	80013ba <main+0x176>
+ 8001332:	f000 f9a7 	bl	8001684 <Disable_Load>
+ 8001336:	e03d      	b.n	80013b4 <main+0x170>
 					  }else{
 						  ;
 					  }
 				}
 			}
 			else if(Control == 0xFF){
- 800133e:	4b2a      	ldr	r3, [pc, #168]	@ (80013e8 <main+0x1a4>)
- 8001340:	781b      	ldrb	r3, [r3, #0]
- 8001342:	2bff      	cmp	r3, #255	@ 0xff
- 8001344:	d139      	bne.n	80013ba <main+0x176>
+ 8001338:	4b2b      	ldr	r3, [pc, #172]	@ (80013e8 <main+0x1a4>)
+ 800133a:	781b      	ldrb	r3, [r3, #0]
+ 800133c:	2bff      	cmp	r3, #255	@ 0xff
+ 800133e:	d139      	bne.n	80013b4 <main+0x170>
 				if(Data == 0x01){
- 8001346:	4b29      	ldr	r3, [pc, #164]	@ (80013ec <main+0x1a8>)
- 8001348:	781b      	ldrb	r3, [r3, #0]
- 800134a:	2b01      	cmp	r3, #1
- 800134c:	d135      	bne.n	80013ba <main+0x176>
+ 8001340:	4b2a      	ldr	r3, [pc, #168]	@ (80013ec <main+0x1a8>)
+ 8001342:	781b      	ldrb	r3, [r3, #0]
+ 8001344:	2b01      	cmp	r3, #1
+ 8001346:	d135      	bne.n	80013b4 <main+0x170>
 					//Take sample of 500 current readings
 					for (int i = 0; i < SAMPLE_COUNT; i++) {
- 800134e:	2300      	movs	r3, #0
- 8001350:	60fb      	str	r3, [r7, #12]
- 8001352:	e00f      	b.n	8001374 <main+0x130>
+ 8001348:	2300      	movs	r3, #0
+ 800134a:	60fb      	str	r3, [r7, #12]
+ 800134c:	e00f      	b.n	800136e <main+0x12a>
 							samples[i] = Read_ADC();
- 8001354:	f000 f8a8 	bl	80014a8 <Read_ADC>
- 8001358:	eef0 7a40 	vmov.f32	s15, s0
- 800135c:	683a      	ldr	r2, [r7, #0]
- 800135e:	68fb      	ldr	r3, [r7, #12]
- 8001360:	009b      	lsls	r3, r3, #2
- 8001362:	4413      	add	r3, r2
- 8001364:	edc3 7a00 	vstr	s15, [r3]
+ 800134e:	f000 f8ab 	bl	80014a8 <Read_ADC>
+ 8001352:	eef0 7a40 	vmov.f32	s15, s0
+ 8001356:	683a      	ldr	r2, [r7, #0]
+ 8001358:	68fb      	ldr	r3, [r7, #12]
+ 800135a:	009b      	lsls	r3, r3, #2
+ 800135c:	4413      	add	r3, r2
+ 800135e:	edc3 7a00 	vstr	s15, [r3]
 							HAL_Delay(1);
- 8001368:	2001      	movs	r0, #1
- 800136a:	f000 fdad 	bl	8001ec8 <HAL_Delay>
+ 8001362:	2001      	movs	r0, #1
+ 8001364:	f000 fdb0 	bl	8001ec8 <HAL_Delay>
 					for (int i = 0; i < SAMPLE_COUNT; i++) {
- 800136e:	68fb      	ldr	r3, [r7, #12]
- 8001370:	3301      	adds	r3, #1
- 8001372:	60fb      	str	r3, [r7, #12]
- 8001374:	68fa      	ldr	r2, [r7, #12]
- 8001376:	68bb      	ldr	r3, [r7, #8]
- 8001378:	429a      	cmp	r2, r3
- 800137a:	dbeb      	blt.n	8001354 <main+0x110>
+ 8001368:	68fb      	ldr	r3, [r7, #12]
+ 800136a:	3301      	adds	r3, #1
+ 800136c:	60fb      	str	r3, [r7, #12]
+ 800136e:	68fa      	ldr	r2, [r7, #12]
+ 8001370:	68bb      	ldr	r3, [r7, #8]
+ 8001372:	429a      	cmp	r2, r3
+ 8001374:	dbeb      	blt.n	800134e <main+0x10a>
 					}
 					currentRMS = Calculate_RMS(samples, SAMPLE_COUNT); // Calculate the RMS value
- 800137c:	68b9      	ldr	r1, [r7, #8]
- 800137e:	6838      	ldr	r0, [r7, #0]
- 8001380:	f000 f8f4 	bl	800156c <Calculate_RMS>
- 8001384:	eef0 7a40 	vmov.f32	s15, s0
- 8001388:	4b1a      	ldr	r3, [pc, #104]	@ (80013f4 <main+0x1b0>)
- 800138a:	edc3 7a00 	vstr	s15, [r3]
+ 8001376:	68b9      	ldr	r1, [r7, #8]
+ 8001378:	6838      	ldr	r0, [r7, #0]
+ 800137a:	f000 f8f7 	bl	800156c <Calculate_RMS>
+ 800137e:	eef0 7a40 	vmov.f32	s15, s0
+ 8001382:	4b1c      	ldr	r3, [pc, #112]	@ (80013f4 <main+0x1b0>)
+ 8001384:	edc3 7a00 	vstr	s15, [r3]
 
 				    sprintf(buffer, "%.2f", currentRMS);  // Format float to a string
- 800138e:	4b19      	ldr	r3, [pc, #100]	@ (80013f4 <main+0x1b0>)
- 8001390:	681b      	ldr	r3, [r3, #0]
- 8001392:	4618      	mov	r0, r3
- 8001394:	f7ff f8d8 	bl	8000548 <__aeabi_f2d>
- 8001398:	4602      	mov	r2, r0
- 800139a:	460b      	mov	r3, r1
- 800139c:	4916      	ldr	r1, [pc, #88]	@ (80013f8 <main+0x1b4>)
- 800139e:	4817      	ldr	r0, [pc, #92]	@ (80013fc <main+0x1b8>)
- 80013a0:	f006 f8d2 	bl	8007548 <siprintf>
+ 8001388:	4b1a      	ldr	r3, [pc, #104]	@ (80013f4 <main+0x1b0>)
+ 800138a:	681b      	ldr	r3, [r3, #0]
+ 800138c:	4618      	mov	r0, r3
+ 800138e:	f7ff f8db 	bl	8000548 <__aeabi_f2d>
+ 8001392:	4602      	mov	r2, r0
+ 8001394:	460b      	mov	r3, r1
+ 8001396:	4918      	ldr	r1, [pc, #96]	@ (80013f8 <main+0x1b4>)
+ 8001398:	4818      	ldr	r0, [pc, #96]	@ (80013fc <main+0x1b8>)
+ 800139a:	f006 f8d5 	bl	8007548 <siprintf>
 				    HAL_UART_Transmit(&huart1, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
- 80013a4:	4815      	ldr	r0, [pc, #84]	@ (80013fc <main+0x1b8>)
- 80013a6:	f7fe ff63 	bl	8000270 <strlen>
- 80013aa:	4603      	mov	r3, r0
- 80013ac:	b29a      	uxth	r2, r3
- 80013ae:	f04f 33ff 	mov.w	r3, #4294967295	@ 0xffffffff
- 80013b2:	4912      	ldr	r1, [pc, #72]	@ (80013fc <main+0x1b8>)
- 80013b4:	4808      	ldr	r0, [pc, #32]	@ (80013d8 <main+0x194>)
- 80013b6:	f003 ff4b 	bl	8005250 <HAL_UART_Transmit>
+ 800139e:	4817      	ldr	r0, [pc, #92]	@ (80013fc <main+0x1b8>)
+ 80013a0:	f7fe ff66 	bl	8000270 <strlen>
+ 80013a4:	4603      	mov	r3, r0
+ 80013a6:	b29a      	uxth	r2, r3
+ 80013a8:	f04f 33ff 	mov.w	r3, #4294967295	@ 0xffffffff
+ 80013ac:	4913      	ldr	r1, [pc, #76]	@ (80013fc <main+0x1b8>)
+ 80013ae:	480a      	ldr	r0, [pc, #40]	@ (80013d8 <main+0x194>)
+ 80013b0:	f003 ff4e 	bl	8005250 <HAL_UART_Transmit>
 				}
 			}
 		  }
+		    data_received_flag = 0; //reset receive flag
+ 80013b4:	4b09      	ldr	r3, [pc, #36]	@ (80013dc <main+0x198>)
+ 80013b6:	2200      	movs	r2, #0
+ 80013b8:	701a      	strb	r2, [r3, #0]
 			memset(rx_buffer, 0, Data_BUFFER_SIZE);
  80013ba:	220c      	movs	r2, #12
  80013bc:	2100      	movs	r1, #0

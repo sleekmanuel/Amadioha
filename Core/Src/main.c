@@ -205,7 +205,6 @@ int main(void)
 		  //Check if the message is meant for me
 		  if(memcmp(mySerialLow, rx_buffer, 8) == 0)
 		  {
-		    data_received_flag = 0; //reset receive flag
 			Control = rx_buffer[8];   // extract command information
 			Data = rx_buffer[9];
 			if(Control == 0xC0){
@@ -237,6 +236,7 @@ int main(void)
 				}
 			}
 		  }
+		    data_received_flag = 0; //reset receive flag
 			memset(rx_buffer, 0, Data_BUFFER_SIZE);
 			HAL_UART_Receive_IT(&huart1, &received_byte, 1);  // Continue receiving
 	}
