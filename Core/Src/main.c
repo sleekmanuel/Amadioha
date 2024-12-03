@@ -21,15 +21,19 @@
   ******************************************************************************
   *
   *Receive Data frame via Zigbee Protocol
-  *Receive 	RxData[6]
+  *Receive 	RxData[11]
   *Receive 		  [0]: ATSL 1
   *Receive 		  [1]: ATSL 2
   *Receive 		  [2]: ATSL 3
   *Receive 		  [3]: ATSL 4
-  *Receive 		  [4]: Control -> Command (C0) or Request (FF)
-  *Receive 		  [5]: Command Data -> Turn ON Load (0F) Turn off Load (0A)
-  *Receive 		  [5]: Request Data -> Current Data (01)
-  *Receive 		  [6]: '\r' End of Message
+  *Receive 		  [4]: ATSL 5
+  *Receive 		  [5]: ATSL 6
+  *Receive 		  [6]: ATSL 7
+  *Receive 		  [7]: ATSL 8
+  *Receive 		  [8]: Control -> Command (C0) or Request (FF)
+  *Receive 		  [9]: Command Data -> Turn ON Load (0F) Turn off Load (0A)
+  *Receive 		  [10]: Request Data -> Current Data (01)
+  *Receive 		  [11]: '\r' End of Message
   *
   *Timers:
   *Timers: TIM1 -> used temporarily to test transmission
