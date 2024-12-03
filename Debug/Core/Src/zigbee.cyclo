@@ -1,0 +1,4 @@
+../Core/Src/zigbee.c:32:6:requestSerialNumberLow	5
+../Core/Src/zigbee.c:68:6:requestDestNumberLow	4
+../Core/Src/zigbee.c:139:6:writeCommand	5
+../Core/Src/zigbee.c:170:6:setDestinationAddress	8

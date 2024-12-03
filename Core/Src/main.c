@@ -54,6 +54,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "math.h"
+#include <zigbee.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -136,10 +137,7 @@ float Read_ADC(void);
 float Calculate_RMS(float samples[], int sampleCount);
 
 
-void requestSerialNumberLow(void);
-void requestDestNumberLow(void);
-void setDestinationAddress(uint32_t DH, uint32_t DL);
-void writeCommand(void);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -190,9 +188,6 @@ int main(void)
   //requestDestNumberLow();
   //setDestinationAddress(0x000000, 0x00FFFF);
   //writeCommand();
-
-
-
 
   const int SAMPLE_COUNT = 250; // Number of samples to take for RMS
   float samples[SAMPLE_COUNT];
@@ -421,185 +416,6 @@ uint32_t Parse_RxSLData(uint8_t data[])
 
 
 
- /*
-  * Enter AT command mode
-  * Request XBee Serial Number Low (ATSL)
-  * Exit AT command mode
-  */
-
- void requestSerialNumberLow(void)
- {
-     // Clear rx_buffer and reset the data_received_flag
-     memset(rx_buffer, 0, Data_BUFFER_SIZE);
-     data_received_flag = 0;
-
-     char command_mode[3] = "+++";  //Command to enter AT command mode
-     char at_command[] = "ATSL\r";  // Command to request Serial Number Low
-     char exit_command[] = "ATCN\r";  // Command to exit AT command mode
-
-     // Send "+++" to enter AT command mode
-     HAL_UART_Transmit(&huart1, (uint8_t*)command_mode, strlen(command_mode), HAL_MAX_DELAY);
-     HAL_Delay(1000);  // Small delay for XBee to respond
-     HAL_UART_Receive_IT(&huart1,  &received_byte, 1);
-
-     while(!data_received_flag); //wait for Rx to complete
-     if (strncmp((char *)rx_buffer, "OK", 2) == 0) {
-         // Reset flag and buffer
-         data_received_flag = 0;
-         memset(rx_buffer, 0, Data_BUFFER_SIZE);
-    	 // Send the ATSL command
-    	 HAL_UART_Transmit(&huart1, (uint8_t*)at_command, strlen(at_command), HAL_MAX_DELAY);
-    	 // Receive the response (Serial Number Low)
-    	 HAL_UART_Receive_IT(&huart1, &received_byte, 1);
-    	 while(!data_received_flag); //wait for Rx to complete
-    	 memcpy(mySerialLow, rx_buffer, 8);  // Move the received data to the transmission buffer
-    	 data_received_flag = 0; //reset receive flag
-     }
-     // Send ATCN command to exit command mode
-     HAL_UART_Transmit(&huart1, (uint8_t*)exit_command, strlen(exit_command), HAL_MAX_DELAY);
-     HAL_UART_Receive_IT(&huart1, &received_byte, 1);
-     while(!data_received_flag); //wait for Rx to complete
-     data_received_flag = 0;
-     memset(rx_buffer, 0, Data_BUFFER_SIZE);
- }
- // Function to request XBee Serial Number Low (ATSL)
- void requestDestNumberLow(void)
- {
-     // Clear rx_buffer and reset the data_received_flag
-     memset(rx_buffer, 0, Data_BUFFER_SIZE);
-     data_received_flag = 0;
-
-     char command_mode[3] = "+++";  //Command to enter AT command mode
-     char at_command[] = "ATDL\r";  // Command to request Destination Number Low
-     char exit_command[] = "ATCN\r";  // Command to exit AT command mode
-
-     // Send "+++" to enter AT command mode
-     HAL_UART_Transmit(&huart1, (uint8_t*)command_mode, strlen(command_mode), HAL_MAX_DELAY);
-     HAL_Delay(1000);  // Small delay for XBee to respond
-     HAL_UART_Receive_IT(&huart1,  &received_byte, 1);
-
-     while(!data_received_flag); //wait for Rx to complete
-     if (strncmp((char *)rx_buffer, "OK", 2) == 0) {
-         // Reset flag and buffer
-         data_received_flag = 0;
-         memset(rx_buffer, 0, Data_BUFFER_SIZE);
-    	 // Send the ATSL command
-    	 HAL_UART_Transmit(&huart1, (uint8_t*)at_command, strlen(at_command), HAL_MAX_DELAY);
-    	 // Receive the response (Serial Number Low)
-    	 HAL_UART_Receive_IT(&huart1, &received_byte, 1);
-    	 while(!data_received_flag); //wait for Rx to complete
-    	 memcpy(myDestLow, rx_buffer, 8);  // Move the received data to the transmission buffer
-    	 data_received_flag = 0; //reset receive flag
-     }
-     // Send ATCN command to exit command mode
-     HAL_UART_Transmit(&huart1, (uint8_t*)exit_command, strlen(exit_command), HAL_MAX_DELAY);
-     HAL_UART_Receive_IT(&huart1, &received_byte, 1);
- }
-
- void writeCommand(){
-     // Clear rx_buffer and reset the data_received_flag
-     memset(rx_buffer, 0, Data_BUFFER_SIZE);
-     data_received_flag = 0;
-
-     char command_mode[3] = "+++";  //Command to enter AT command mode
-     char at_command[] = "ATWR\r";  // Command to write to XBEE EEPROM
-
-     // Send "+++" to enter AT command mode
-     HAL_UART_Transmit(&huart1, (uint8_t*)command_mode, strlen(command_mode), HAL_MAX_DELAY);
-     HAL_Delay(1000);  // Small delay for XBee to respond
-     HAL_UART_Receive_IT(&huart1,  &received_byte, 1);
-
-     while(!data_received_flag); //wait for Rx to complete
-     if (strncmp((char *)rx_buffer, "OK", 2) == 0) {
-              // Reset flag and buffer
-        data_received_flag = 0;
-        memset(rx_buffer, 0, Data_BUFFER_SIZE);
-         	 // Send the ATSL command
-        HAL_UART_Transmit(&huart1, (uint8_t*)at_command, strlen(at_command), HAL_MAX_DELAY);
-         	 // Receive the response (Serial Number Low)
-        HAL_UART_Receive_IT(&huart1, &received_byte, 1);
-        while(!data_received_flag); //wait for Rx to complete
-         	 // Check response for ATWR
-        if (strncmp((char *)rx_buffer, "OK", 2) != 0) {
-         // Handle memory write failure
-         printf("Failed to write changes to memory!\n");
-         }
-         	  }
- }
-
- void setDestinationAddress(uint32_t DH, uint32_t DL)
- {
-     char at_high[20];
-     char at_low[20];
-     char command_mode[3] = "+++";  //Command to enter AT command mode
-     char exit_command[] = "ATCN\r";  // Command to exit AT command mode
-
-     // Format the AT commands
-     snprintf(at_high, sizeof(at_high), "ATDH %08X\r", (unsigned int)DH);
-     snprintf(at_low, sizeof(at_low), "ATDL %08X\r", (unsigned int)DL);
-
-     // Clear rx_buffer and reset the data_received_flag
-     memset(rx_buffer, 0, Data_BUFFER_SIZE);
-     data_received_flag = 0;
-
-     // Send "+++" to enter AT command mode
-     HAL_UART_Transmit(&huart1, (uint8_t*)command_mode, strlen(command_mode), HAL_MAX_DELAY);
-     HAL_Delay(1000);  // Small delay for XBee to respond
-     HAL_UART_Receive_IT(&huart1,  &received_byte, 1);
-
-	 while(!data_received_flag); //wait for Rx to complete
-     // Transmit ATDH command
-     HAL_UART_Transmit(&huart1, (uint8_t *)at_high, strlen(at_high), HAL_MAX_DELAY);
-
-     // Enable reception interrupt
-     HAL_UART_Receive_IT(&huart1, &received_byte, 1);
-
-     // Wait for reception to complete
-     while (!data_received_flag);
-
-     // Check response for ATDH
-     if (strncmp((char *)rx_buffer, "OK", 2) == 0) {
-         // Reset flag and buffer
-         data_received_flag = 0;
-         memset(rx_buffer, 0, Data_BUFFER_SIZE);
-
-         // Transmit ATDL command
-         HAL_UART_Transmit(&huart1, (uint8_t *)at_low, strlen(at_low), HAL_MAX_DELAY);
-
-         // Enable reception interrupt
-         HAL_UART_Receive_IT(&huart1, &received_byte, 1);
-
-         // Wait for reception to complete
-         while (!data_received_flag);
-
-         // Check response for ATDL
-         if (strncmp((char *)rx_buffer, "OK", 2) == 0) {
-             // Reset flag and buffer
-             data_received_flag = 0;
-             memset(rx_buffer, 0, Data_BUFFER_SIZE);
-
-             // exit command
-             HAL_UART_Transmit(&huart1, (uint8_t*)exit_command, strlen(exit_command), HAL_MAX_DELAY);
-             HAL_UART_Receive_IT(&huart1, &received_byte, 1);
-
-             // Wait for reception to complete
-             while (!data_received_flag);
-
-             // Check response for ATCN
-             if (strncmp((char *)rx_buffer, "OK", 2) != 0) {
-                 // Handle memory write failure
-                 printf("Failed to exit!\n");
-             }
-         } else {
-             // Handle ATDL failure
-             printf("Failed to set destination low address!\n");
-         }
-     } else {
-         // Handle ATDH failure
-         printf("Failed to set destination high address!\n");
-     }
- }
-
 
  /*
   * Receive interrupt callback function
@@ -625,20 +441,6 @@ uint32_t Parse_RxSLData(uint8_t data[])
          HAL_UART_Receive_IT(&huart1, &received_byte, 1);  // Continue receiving
      }
  }
-
- void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
- {
-   if (htim->Instance == TIM2)  // Check if the interrupt is from TIM1
-   {
-     /* Transmit current value after .1 sec */
-
-	   //HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-   }
- }
-
-
-
-
 /* USER CODE END 4 */
 
 /**
