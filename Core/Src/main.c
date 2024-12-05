@@ -184,8 +184,15 @@ int main(void)
 
 
   //Request and store XBee Serial Number Low
-  requestSerialNumberLow();
-  //requestDestNumberLow();
+  //requestSerialNumberLow();
+  if (requestParameter("ATSL\r", mySerialLow, sizeof(mySerialLow)) == XBEE_SUCCESS) {
+      //printf("Serial Number Low: %s\n", serial_number_low);
+  } else {
+      while(1){
+    	  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin); // turn on LEDs
+    	  HAL_Delay(100);
+      }
+  }
   //setDestinationAddress(0x000000, 0x00FFFF);
   //writeCommand();
 
@@ -198,7 +205,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
 	if(data_received_flag)
 	{
 		  //Check if the message is meant for me
@@ -328,20 +334,12 @@ float Calculate_RMS(float samples[], int sampleCount) {
 
 void CheckAndTransmitLoadChange(void) {
     if (loadActive != previousLoadActive) {
-        // Update destination address to target device
-    	//setDestinationAddress(ADDRESS_HIGH, 0x4226800E);
-    	  // HAL_Delay(1000);
         if (loadActive) {
-            HAL_UART_Transmit(&huart1, Load_Active, 11, HAL_MAX_DELAY);  // Send "load active" message
+            HAL_UART_Transmit(&huart1, Load_Active, sizeof(Load_Active), HAL_MAX_DELAY);  // Send "load active" message
         } else {
-            HAL_UART_Transmit(&huart1, Load_Inactive, 11, HAL_MAX_DELAY);  // Send "load inactive" message
+            HAL_UART_Transmit(&huart1, Load_Inactive, sizeof(Load_Inactive), HAL_MAX_DELAY);  // Send "load inactive" message
         }
-
-        // Reset destination address to default broadcast address
-       // setDestinationAddress(0x0000, 0x0000);
-       // HAL_Delay(1000);
-
-        // Update the previous state
+       // Update the previous state
         previousLoadActive = loadActive;
     }
 }
@@ -355,8 +353,8 @@ void Enable_Load(void)
 {
 	loadActive = 1;
 
-	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, SET); //engage relay
-	HAL_GPIO_WritePin(GPIOA, VBase_Pin, SET); // turn on LEDs
+	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, SET); // turn on LEDs
+	HAL_GPIO_WritePin(GPIOA, VBase_Pin, SET); //engage relay
 	CheckAndTransmitLoadChange();
 }
 /*
@@ -367,8 +365,8 @@ void Disable_Load(void)
 {
 	loadActive = 0;
 
-	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, RESET); // disengage relay
-	HAL_GPIO_WritePin(GPIOA, VBase_Pin, RESET); // turn off LEDs
+	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, RESET); // turn off LEDs
+	HAL_GPIO_WritePin(GPIOA, VBase_Pin, RESET); // disengage relay
 	CheckAndTransmitLoadChange();
 }
 /*

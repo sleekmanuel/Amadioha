@@ -13,10 +13,14 @@
 #include <string.h>
 
 #define Data_BUFFER_SIZE 12
+#define XBEE_SUCCESS        0
+#define XBEE_ERROR_RESPONSE 1
+#define XBEE_ERROR_TIMEOUT  2
 
-void requestSerialNumberLow(void);
-void requestDestNumberLow(void);
+
+
 void setDestinationAddress(uint32_t DH, uint32_t DL);
 void writeCommand(void);
+int requestParameter(const char *at_command, uint8_t *output_buffer, size_t length);
 
 #endif /* INC_ZIGBEE_H_ */
