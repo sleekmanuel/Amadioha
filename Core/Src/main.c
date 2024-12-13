@@ -71,7 +71,7 @@
 #define DEBOUNCE_DELAY_MS 50
 #define TX_BUFFER_SIZE 1
 #define ADDRESS_HIGH 0x13A200  // High address on Xbee devices
-
+#define SAMPLE_COUNT 250 // Number of samples to take for RMS
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -122,6 +122,7 @@ volatile float frequency = 0;
 volatile uint8_t isRisingEdge = 1;
 
 char buffer[10];
+float samples[SAMPLE_COUNT];
 
 /* USER CODE END PV */
 
@@ -133,10 +134,9 @@ void Disable_Load(void);
 void CheckAndTransmitLoadChange(void);
 uint32_t Parse_RxSLData(uint8_t[]);
 float Read_ADC(void);
-//uint8_t Calculate_Current(uint32_t);
 float Calculate_RMS(float samples[], int sampleCount);
-
-
+void handleSwitchControl(uint8_t Data);
+void handleCurrentControl(void);
 
 /* USER CODE END PFP */
 
@@ -178,26 +178,20 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_UART_Receive_IT(&huart1, &received_byte, 1);  // start IT receiving
-
-
+/* XBEE Configuration--------------------------------------------------------*/
   //Request and store XBee Serial Number Low
-  //requestSerialNumberLow();
   if (requestParameter("ATSL\r", mySerialLow, sizeof(mySerialLow)) == XBEE_SUCCESS) {
       //printf("Serial Number Low: %s\n", serial_number_low);
   } else {
+	  //Blink LED in a loop to indicate issue
       while(1){
     	  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin); // turn on LEDs
     	  HAL_Delay(100);
       }
   }
-  //setDestinationAddress(0x000000, 0x00FFFF);
-  //writeCommand();
-
-  const int SAMPLE_COUNT = 250; // Number of samples to take for RMS
-  float samples[SAMPLE_COUNT];
+/* XBEE Configuration Ends--------------------------------------------------*/
   HAL_GPIO_WritePin(GPIOA, Sense_CuttOff_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
@@ -205,46 +199,26 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	if(data_received_flag)
-	{
-		  //Check if the message is meant for me
-		  if(memcmp(mySerialLow, rx_buffer, 8) == 0)
-		  {
-			Control = rx_buffer[8];   // extract command information
-			Data = rx_buffer[9];
-			if(Control == 0xC0){
-				if(Data == 0x0F){
-					  if(loadActive){
-						  ;
-					  }else{
-						  Enable_Load();
-					  }
-				}else if(Data == 0x0A){
-					  if(loadActive){
-						  Disable_Load();
-					  }else{
-						  ;
-					  }
-				}
-			}
-			else if(Control == 0xFF){
-				if(Data == 0x01){
-					//Take sample of 500 current readings
-					for (int i = 0; i < SAMPLE_COUNT; i++) {
-							samples[i] = Read_ADC();
-							HAL_Delay(1);
-					}
-					currentRMS = Calculate_RMS(samples, SAMPLE_COUNT); // Calculate the RMS value
+	  if (data_received_flag) {
+	           // Check if the message is meant for me
+	           if (memcmp(mySerialLow, rx_buffer, 8) == 0) {
+	               // Extract and handle command and data
+	               Control = rx_buffer[8];
+	               Data = rx_buffer[9];
 
-				    sprintf(buffer, "%.2f", currentRMS);  // Format float to a string
-				    HAL_UART_Transmit(&huart1, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
-				}
-			}
-		  }
-		    data_received_flag = 0; //reset receive flag
-			memset(rx_buffer, 0, Data_BUFFER_SIZE);
-			HAL_UART_Receive_IT(&huart1, &received_byte, 1);  // Continue receiving
-	}
+	               if (Control == 0xC0) {
+	                   handleSwitchControl(Data);
+	               } else if (Control == 0xFF && Data == 0x01) {
+	                   handleCurrentControl();
+	               }
+	           }
+
+	           // Reset flags and buffers after processing
+	           data_received_flag = 0;
+	           memset(rx_buffer, 0, Data_BUFFER_SIZE);
+	           HAL_UART_Receive_IT(&huart1, &received_byte, 1);
+	       }
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -331,8 +305,11 @@ float Calculate_RMS(float samples[], int sampleCount) {
     return sqrt(sumSquares / sampleCount);
 }
 
-
-void CheckAndTransmitLoadChange(void) {
+/*
+ * checks if load changed state and transmits new state to motion sensor
+ */
+void CheckAndTransmitLoadChange(void)
+{
     if (loadActive != previousLoadActive) {
         if (loadActive) {
             HAL_UART_Transmit(&huart1, Load_Active, sizeof(Load_Active), HAL_MAX_DELAY);  // Send "load active" message
@@ -343,7 +320,37 @@ void CheckAndTransmitLoadChange(void) {
         previousLoadActive = loadActive;
     }
 }
+/*
+ * @func processes information for load control
+ * @param Data section of Rx transmission
+ */
+void handleSwitchControl(uint8_t Data)
+{
+    if (Data == 0x0F) {
+        if (!loadActive) {
+            Enable_Load();
+        }
+    } else if (Data == 0x0A) {
+        if (loadActive) {
+            Disable_Load();
+        }
+    }
+}
 
+// Function to handle Control == 0xFF and Data == 0x01
+void handleCurrentControl()
+{
+    // Take sample of 500 current readings
+    for (int i = 0; i < SAMPLE_COUNT; i++) {
+        samples[i] = Read_ADC();
+        HAL_Delay(1);
+    }
+    currentRMS = Calculate_RMS(samples, SAMPLE_COUNT); // Calculate the RMS value
+
+    char buffer[32];
+    sprintf(buffer, "%.2f", currentRMS); // Format float to a string
+    HAL_UART_Transmit(&huart1, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
+}
 
 /*
  * Enable Load when Load is disabled
@@ -385,11 +392,12 @@ uint32_t Parse_RxSLData(uint8_t data[])
     return address;
 }
 
+/* Check if the power on button is pushed
+ * if pushed when the load is active, it turns off the load and vice-versa
+*/
  void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  /* Check if the power on button is pushed
-   * if pushed when the load is active, it turns off the load and vice-versa
-  */
+
 	 if(GPIO_Pin == Switch_Pin)
 	     {
 	         /* Get the current time (in milliseconds) */
@@ -398,21 +406,12 @@ uint32_t Parse_RxSLData(uint8_t data[])
 	         if((currentTime - lastDebounceTime) >= DEBOUNCE_DELAY_MS)
 	         {
 	             /* Toggle the load state */
-	             if(loadActive)
-	             {
-	                 Disable_Load();
-	             }
-	             else
-	             {
-	                 Enable_Load();
-	             }
+	             (loadActive) ? Disable_Load(): Enable_Load();
 	             /* Update the last debounce time */
 	             lastDebounceTime = currentTime;
 	         }
 	     }
 }
-
-
 
 
  /*
