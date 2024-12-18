@@ -29,6 +29,7 @@ int XBEE_ERROR_RESPONSE;
  */
 
 
+<<<<<<< HEAD
 void requestSerialNumberLow(void)
 {
     // Clear rx_buffer and reset the data_received_flag
@@ -98,7 +99,47 @@ void requestDestNumberLow(void)
     HAL_UART_Receive_IT(&huart1, &received_byte, 1);
 }
 
+=======
+int requestParameter(const char *at_command, uint8_t *output_buffer, size_t length) {
+    // Clear buffer and reset flag
+    memset(rx_buffer, 0, Data_BUFFER_SIZE);
+    data_received_flag = 0;
+>>>>>>> refs/heads/Dec_13
 
+<<<<<<< HEAD
+=======
+    char command_mode[] = "+++";
+    char exit_command[] = "ATCN\r";
+
+    // Enter AT command mode
+    HAL_UART_Transmit(&huart1, (uint8_t *)command_mode, strlen(command_mode), HAL_MAX_DELAY);
+    HAL_Delay(1000);
+    HAL_UART_Receive_IT(&huart1, &received_byte, 1);
+
+    while (!data_received_flag);
+    if (strncmp((char *)rx_buffer, "OK", 2) != 0) return XBEE_ERROR_RESPONSE;
+
+    // Send the parameter request command
+    data_received_flag = 0;
+    memset(rx_buffer, 0, Data_BUFFER_SIZE);
+    HAL_UART_Transmit(&huart1, (uint8_t *)at_command, strlen(at_command), HAL_MAX_DELAY);
+    HAL_UART_Receive_IT(&huart1, &received_byte, 1);
+
+    while (!data_received_flag);
+    if (strlen((char *)rx_buffer) < length) return XBEE_ERROR_RESPONSE;
+    memcpy(output_buffer, rx_buffer, length);
+
+    // Exit AT command mode
+    data_received_flag = 0;
+    memset(rx_buffer, 0, Data_BUFFER_SIZE);
+    HAL_UART_Transmit(&huart1, (uint8_t *)exit_command, strlen(exit_command), HAL_MAX_DELAY);
+    HAL_UART_Receive_IT(&huart1, &received_byte, 1);
+
+    while (!data_received_flag);
+    return strncmp((char *)rx_buffer, "OK", 2) == 0 ? XBEE_SUCCESS : XBEE_ERROR_RESPONSE;
+}
+
+>>>>>>> refs/heads/Dec_13
 
 void writeCommand(){
     // Clear rx_buffer and reset the data_received_flag

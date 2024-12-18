@@ -15,7 +15,7 @@
   *
  **********************PROJECT DESCRIPTION***********************************
   *  Firmware for smart light switch. Smart switch communicates with Hub to connecto to the internet
-  *  Sends current value (mA) to hub via zigbee network
+  *  Sends current value (A) to hub via zigbee network
   *  Receives action command to turn on or off load from end device(motion sensor)
   *  also receives on and off command from Hub (interface from internet)
   ******************************************************************************
@@ -36,9 +36,8 @@
   *Receive 		  [11]: '\r' End of Message
   *
   *Timers:
-  *Timers: TIM1 -> used temporarily to test transmission
-  *Timers: TIM2 -> utilized for PWM input from TMCS1123
-  ******************************************************************************
+  *Timers:
+    ******************************************************************************
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
@@ -66,12 +65,11 @@
 /* USER CODE BEGIN PD */
 #define V_REF 3.3 // ADC reference voltage (Vref) in volts
 #define ADC_RESOLUTION 4095.0  // ADC resolution (12-bit gives values from 0 to 4095)
-#define SENSITIVITY 0.1  // TMCS1123B2A sensitivity (mV per Ampere, example: 50 mV/A)
+#define SENSITIVITY 0.185  // ACS712 sensitivity
 #define Data_BUFFER_SIZE 12   // Transmission Buffer size
 #define DEBOUNCE_DELAY_MS 50
-#define TX_BUFFER_SIZE 1
 #define ADDRESS_HIGH 0x13A200  // High address on Xbee devices
-
+#define SAMPLE_COUNT 250 // Number of samples to take for RMS
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -83,45 +81,28 @@
 
 /* USER CODE BEGIN PV */
 ///////// XBee PV ////////////////////
-uint8_t TxData[Data_BUFFER_SIZE];   // Buffer to store XBee transmission
 uint8_t loadActive = 0;				 // Status for active Load
 uint8_t previousLoadActive = 0;		// Store previous load state
 volatile uint8_t overflow_flag = 0;		  // Flag to indicate UART_Rx overflow
 volatile uint8_t data_received_flag = 0;  // Flag to indicate data reception
 uint8_t rx_buffer[Data_BUFFER_SIZE];             // Buffer to store received data
-uint8_t RxData[6];
 uint8_t received_byte;		  // Process UART_Rx by byte
 uint8_t Load_Active[11] = {0x34, 0x32, 0x32, 0x36, 0x38, 0x30, 0x30, 0x45, 0xB3, 0x11, 0x0D};	// load active feedback
 uint8_t Load_Inactive[11] = {0x34, 0x32, 0x32, 0x36, 0x38, 0x30, 0x30, 0x45, 0xB3, 0xAA, 0x0D}; // load inactive feedback
 
 //Xbee transmission dataframe
-uint32_t slAddress;				 // source low address
 uint8_t mySerialLow[8];
 uint8_t myDestLow[8];			// store destination address low
 uint8_t Control;                //used to determine if message is a request or command
 uint8_t Data;				   // Transmission data
 
 //ADC PV for Current reading
-uint8_t txCurrentValue;		// Current Value to transmit over zigbee protoc
-
 float currentRMS = 0;  // Read current RMS value
-
 volatile uint16_t adcValue;
-
-char serial_number[10] = {0};
-char response[10] = {0};
 
 volatile uint32_t lastDebounceTime = 0;
 
-//PWM PV for Sensor Diagnostics
-volatile uint32_t lastCapture = 0;
-volatile uint32_t pwmPeriod = 0;
-volatile uint32_t pwmHighTime = 0;
-volatile float dutyCycle = 0;
-volatile float frequency = 0;
-volatile uint8_t isRisingEdge = 1;
-
-char buffer[10];
+float samples[SAMPLE_COUNT];
 
 /* USER CODE END PV */
 
@@ -133,10 +114,9 @@ void Disable_Load(void);
 void CheckAndTransmitLoadChange(void);
 uint32_t Parse_RxSLData(uint8_t[]);
 float Read_ADC(void);
-//uint8_t Calculate_Current(uint32_t);
 float Calculate_RMS(float samples[], int sampleCount);
-
-
+void handleSwitchControl(uint8_t Data);
+void handleCurrentControl(void);
 
 /* USER CODE END PFP */
 
@@ -159,7 +139,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+	HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -178,67 +158,49 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_UART_Receive_IT(&huart1, &received_byte, 1);  // start IT receiving
 
-
+/* XBEE Configuration--------------------------------------------------------*/
   //Request and store XBee Serial Number Low
-  requestSerialNumberLow();
-  //requestDestNumberLow();
-  //setDestinationAddress(0x000000, 0x00FFFF);
-  //writeCommand();
-
-  const int SAMPLE_COUNT = 250; // Number of samples to take for RMS
-  float samples[SAMPLE_COUNT];
-  HAL_GPIO_WritePin(GPIOA, Sense_CuttOff_Pin, GPIO_PIN_SET);
+  if (requestParameter("ATSL\r", mySerialLow, sizeof(mySerialLow)) == XBEE_SUCCESS) {
+      //printf("Serial Number Low: %s\n", serial_number_low);
+  } else {
+	  //Blink LED in a loop to indicate issue
+      while(1){
+    	  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin); // turn on LEDs
+    	  HAL_Delay(100);
+      }
+  }
+/* XBEE Configuration Ends--------------------------------------------------*/
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	 // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 
-	if(data_received_flag)
-	{
-		  //Check if the message is meant for me
-		  if(memcmp(mySerialLow, rx_buffer, 8) == 0)
-		  {
-			Control = rx_buffer[8];   // extract command information
-			Data = rx_buffer[9];
-			if(Control == 0xC0){
-				if(Data == 0x0F){
-					  if(loadActive){
-						  ;
-					  }else{
-						  Enable_Load();
-					  }
-				}else if(Data == 0x0A){
-					  if(loadActive){
-						  Disable_Load();
-					  }else{
-						  ;
-					  }
-				}
-			}
-			else if(Control == 0xFF){
-				if(Data == 0x01){
-					//Take sample of 500 current readings
-					for (int i = 0; i < SAMPLE_COUNT; i++) {
-							samples[i] = Read_ADC();
-							HAL_Delay(1);
-					}
-					currentRMS = Calculate_RMS(samples, SAMPLE_COUNT); // Calculate the RMS value
+	  if (data_received_flag) {
+	           // Check if the message is meant for me
+	           if (memcmp(mySerialLow, rx_buffer, 8) == 0) {
+	               // Extract and handle command and data
+	               Control = rx_buffer[8];
+	               Data = rx_buffer[9];
 
-				    sprintf(buffer, "%.2f", currentRMS);  // Format float to a string
-				    HAL_UART_Transmit(&huart1, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
-				}
-			}
-		  }
-		    data_received_flag = 0; //reset receive flag
-			memset(rx_buffer, 0, Data_BUFFER_SIZE);
-			HAL_UART_Receive_IT(&huart1, &received_byte, 1);  // Continue receiving
-	}
+	               if (Control == 0xC0) {
+	                   handleSwitchControl(Data);
+	               } else if (Control == 0xFF && Data == 0x01) {
+	                   handleCurrentControl();
+	               }
+	           }
+
+	           // Reset flags and buffers after processing
+	           data_received_flag = 0;
+	           memset(rx_buffer, 0, Data_BUFFER_SIZE);
+	           HAL_UART_Receive_IT(&huart1, &received_byte, 1);
+	       }
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -305,12 +267,10 @@ float Read_ADC(void)
     HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);  // Wait for conversion to finish
      adcValue = HAL_ADC_GetValue(&hadc1);  // Get the ADC value
 
-    volatile float voltage = (adcValue / ADC_RESOLUTION) * 3.3;  // Convert ADC value to voltage
-    float zeroCurrentVoltage = V_REF / 2.0;      // Sensor outputs 0.5 * Vcc at zero current
+    volatile float voltage = (adcValue / ADC_RESOLUTION) * V_REF;  // Convert ADC value to voltage
+    float zeroCurrentVoltage = 2.45;      // Measured sensor output voltage at zero current
     // Calculate current using sensor sensitivity (mV/A)
     float current = (voltage - zeroCurrentVoltage) / SENSITIVITY;  // in Amps
-
-
     return current;
 }
 // Function to calculate the RMS value of the sampled current
@@ -325,23 +285,63 @@ float Calculate_RMS(float samples[], int sampleCount) {
     return sqrt(sumSquares / sampleCount);
 }
 
-
-void CheckAndTransmitLoadChange(void) {
+/*
+ * checks if load changed state and transmits new state to motion sensor
+ */
+void CheckAndTransmitLoadChange(void)
+{
     if (loadActive != previousLoadActive) {
+<<<<<<< HEAD
 
+=======
+>>>>>>> refs/heads/Dec_13
         if (loadActive) {
-            HAL_UART_Transmit(&huart1, Load_Active, 11, HAL_MAX_DELAY);  // Send "load active" message
+            HAL_UART_Transmit(&huart1, Load_Active, sizeof(Load_Active), HAL_MAX_DELAY);  // Send "load active" message
         } else {
-            HAL_UART_Transmit(&huart1, Load_Inactive, 11, HAL_MAX_DELAY);  // Send "load inactive" message
+            HAL_UART_Transmit(&huart1, Load_Inactive, sizeof(Load_Inactive), HAL_MAX_DELAY);  // Send "load inactive" message
         }
+<<<<<<< HEAD
 
 
 
         // Update the previous state
+=======
+       // Update the previous state
+>>>>>>> refs/heads/Dec_13
         previousLoadActive = loadActive;
     }
 }
+/*
+ * @func processes information for load control
+ * @param Data section of Rx transmission
+ */
+void handleSwitchControl(uint8_t Data)
+{
+    if (Data == 0x0F) {
+        if (!loadActive) {
+            Enable_Load();
+        }
+    } else if (Data == 0x0A) {
+        if (loadActive) {
+            Disable_Load();
+        }
+    }
+}
 
+// Function to handle Control == 0xFF and Data == 0x01
+void handleCurrentControl()
+{
+    // Take sample of 500 current readings
+    for (int i = 0; i < SAMPLE_COUNT; i++) {
+        samples[i] = Read_ADC();
+        HAL_Delay(1);
+    }
+    currentRMS = Calculate_RMS(samples, SAMPLE_COUNT); // Calculate the RMS value
+
+    char buffer[32];
+    sprintf(buffer, "%.2f", currentRMS); // Format float to a string
+    HAL_UART_Transmit(&huart1, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
+}
 
 /*
  * Enable Load when Load is disabled
@@ -351,8 +351,8 @@ void Enable_Load(void)
 {
 	loadActive = 1;
 
-	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, SET); //engage relay
-	HAL_GPIO_WritePin(GPIOA, VBase_Pin, SET); // turn on LEDs
+	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, SET); // turn on LEDs
+	HAL_GPIO_WritePin(GPIOA, VBase_Pin, SET); //engage relay
 	CheckAndTransmitLoadChange();
 }
 /*
@@ -363,8 +363,8 @@ void Disable_Load(void)
 {
 	loadActive = 0;
 
-	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, RESET); // disengage relay
-	HAL_GPIO_WritePin(GPIOA, VBase_Pin, RESET); // turn off LEDs
+	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, RESET); // turn off LEDs
+	HAL_GPIO_WritePin(GPIOA, VBase_Pin, RESET); // disengage relay
 	CheckAndTransmitLoadChange();
 }
 /*
@@ -383,11 +383,12 @@ uint32_t Parse_RxSLData(uint8_t data[])
     return address;
 }
 
+/* Check if the power on button is pushed
+ * if pushed when the load is active, it turns off the load and vice-versa
+*/
  void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  /* Check if the power on button is pushed
-   * if pushed when the load is active, it turns off the load and vice-versa
-  */
+
 	 if(GPIO_Pin == Switch_Pin)
 	     {
 	         /* Get the current time (in milliseconds) */
@@ -396,21 +397,12 @@ uint32_t Parse_RxSLData(uint8_t data[])
 	         if((currentTime - lastDebounceTime) >= DEBOUNCE_DELAY_MS)
 	         {
 	             /* Toggle the load state */
-	             if(loadActive)
-	             {
-	                 Disable_Load();
-	             }
-	             else
-	             {
-	                 Enable_Load();
-	             }
+	             (loadActive) ? Disable_Load(): Enable_Load();
 	             /* Update the last debounce time */
 	             lastDebounceTime = currentTime;
 	         }
 	     }
 }
-
-
 
 
  /*
