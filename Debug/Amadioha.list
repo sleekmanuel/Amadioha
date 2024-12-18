@@ -2167,6 +2167,7 @@ void CheckAndTransmitLoadChange(void)
  800152e:	781b      	ldrb	r3, [r3, #0]
  8001530:	429a      	cmp	r2, r3
  8001532:	d016      	beq.n	8001562 <CheckAndTransmitLoadChange+0x3e>
+
         if (loadActive) {
  8001534:	4b0c      	ldr	r3, [pc, #48]	@ (8001568 <CheckAndTransmitLoadChange+0x44>)
  8001536:	781b      	ldrb	r3, [r3, #0]
@@ -2187,7 +2188,7 @@ void CheckAndTransmitLoadChange(void)
  8001554:	4807      	ldr	r0, [pc, #28]	@ (8001574 <CheckAndTransmitLoadChange+0x50>)
  8001556:	f003 fe8f 	bl	8005278 <HAL_UART_Transmit>
         }
-       // Update the previous state
+
         previousLoadActive = loadActive;
  800155a:	4b03      	ldr	r3, [pc, #12]	@ (8001568 <CheckAndTransmitLoadChange+0x44>)
  800155c:	781a      	ldrb	r2, [r3, #0]
@@ -3537,9 +3538,9 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
  8001c14:	40021000 	.word	0x40021000
 
 08001c18 <requestParameter>:
- * Request XBee Serial Number Low (ATSL)
- * Exit AT command mode
  */
+
+
 
 
 int requestParameter(const char *at_command, uint8_t *output_buffer, size_t length) {

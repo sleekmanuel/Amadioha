@@ -291,23 +291,13 @@ float Calculate_RMS(float samples[], int sampleCount) {
 void CheckAndTransmitLoadChange(void)
 {
     if (loadActive != previousLoadActive) {
-<<<<<<< HEAD
 
-=======
->>>>>>> refs/heads/Dec_13
         if (loadActive) {
             HAL_UART_Transmit(&huart1, Load_Active, sizeof(Load_Active), HAL_MAX_DELAY);  // Send "load active" message
         } else {
             HAL_UART_Transmit(&huart1, Load_Inactive, sizeof(Load_Inactive), HAL_MAX_DELAY);  // Send "load inactive" message
         }
-<<<<<<< HEAD
 
-
-
-        // Update the previous state
-=======
-       // Update the previous state
->>>>>>> refs/heads/Dec_13
         previousLoadActive = loadActive;
     }
 }
