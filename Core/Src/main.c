@@ -15,7 +15,7 @@
   *
  **********************PROJECT DESCRIPTION***********************************
   *  Firmware for smart light switch. Smart switch communicates with Hub to connecto to the internet
-  *  Sends current value (mA) to hub via zigbee network
+  *  Sends current value (A) to hub via zigbee network
   *  Receives action command to turn on or off load from end device(motion sensor)
   *  also receives on and off command from Hub (interface from internet)
   ******************************************************************************
@@ -66,10 +66,9 @@
 /* USER CODE BEGIN PD */
 #define V_REF 3.3 // ADC reference voltage (Vref) in volts
 #define ADC_RESOLUTION 4095.0  // ADC resolution (12-bit gives values from 0 to 4095)
-#define SENSITIVITY 0.1  // TMCS1123B2A sensitivity (mV per Ampere, example: 50 mV/A)
+#define SENSITIVITY 0.185  // ACS712 sensitivity
 #define Data_BUFFER_SIZE 12   // Transmission Buffer size
 #define DEBOUNCE_DELAY_MS 50
-#define TX_BUFFER_SIZE 1
 #define ADDRESS_HIGH 0x13A200  // High address on Xbee devices
 #define SAMPLE_COUNT 250 // Number of samples to take for RMS
 /* USER CODE END PD */
@@ -123,6 +122,8 @@ volatile uint8_t isRisingEdge = 1;
 
 char buffer[10];
 float samples[SAMPLE_COUNT];
+float test = 0;
+float test2 = 0;
 
 /* USER CODE END PV */
 
@@ -159,7 +160,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+	HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -199,6 +200,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	 // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+
 	  if (data_received_flag) {
 	           // Check if the message is meant for me
 	           if (memcmp(mySerialLow, rx_buffer, 8) == 0) {
@@ -285,12 +288,12 @@ float Read_ADC(void)
     HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);  // Wait for conversion to finish
      adcValue = HAL_ADC_GetValue(&hadc1);  // Get the ADC value
 
-    volatile float voltage = (adcValue / ADC_RESOLUTION) * 3.3;  // Convert ADC value to voltage
-    float zeroCurrentVoltage = V_REF / 2.0;      // Sensor outputs 0.5 * Vcc at zero current
+    volatile float voltage = (adcValue / ADC_RESOLUTION) * V_REF;  // Convert ADC value to voltage
+    float zeroCurrentVoltage = 2.45;      // Sensor outputs 0.5 * Vcc at zero current
     // Calculate current using sensor sensitivity (mV/A)
     float current = (voltage - zeroCurrentVoltage) / SENSITIVITY;  // in Amps
-
-
+    test = voltage;
+    test2= current;
     return current;
 }
 // Function to calculate the RMS value of the sampled current
