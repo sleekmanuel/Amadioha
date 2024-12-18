@@ -36,9 +36,8 @@
   *Receive 		  [11]: '\r' End of Message
   *
   *Timers:
-  *Timers: TIM1 -> used temporarily to test transmission
-  *Timers: TIM2 -> utilized for PWM input from TMCS1123
-  ******************************************************************************
+  *Timers:
+    ******************************************************************************
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
@@ -82,48 +81,28 @@
 
 /* USER CODE BEGIN PV */
 ///////// XBee PV ////////////////////
-uint8_t TxData[Data_BUFFER_SIZE];   // Buffer to store XBee transmission
 uint8_t loadActive = 0;				 // Status for active Load
 uint8_t previousLoadActive = 0;		// Store previous load state
 volatile uint8_t overflow_flag = 0;		  // Flag to indicate UART_Rx overflow
 volatile uint8_t data_received_flag = 0;  // Flag to indicate data reception
 uint8_t rx_buffer[Data_BUFFER_SIZE];             // Buffer to store received data
-uint8_t RxData[6];
 uint8_t received_byte;		  // Process UART_Rx by byte
 uint8_t Load_Active[11] = {0x34, 0x32, 0x32, 0x36, 0x38, 0x30, 0x30, 0x45, 0xB3, 0x11, 0x0D};	// load active feedback
 uint8_t Load_Inactive[11] = {0x34, 0x32, 0x32, 0x36, 0x38, 0x30, 0x30, 0x45, 0xB3, 0xAA, 0x0D}; // load inactive feedback
 
 //Xbee transmission dataframe
-uint32_t slAddress;				 // source low address
 uint8_t mySerialLow[8];
 uint8_t myDestLow[8];			// store destination address low
 uint8_t Control;                //used to determine if message is a request or command
 uint8_t Data;				   // Transmission data
 
 //ADC PV for Current reading
-uint8_t txCurrentValue;		// Current Value to transmit over zigbee protoc
-
 float currentRMS = 0;  // Read current RMS value
-
 volatile uint16_t adcValue;
-
-char serial_number[10] = {0};
-char response[10] = {0};
 
 volatile uint32_t lastDebounceTime = 0;
 
-//PWM PV for Sensor Diagnostics
-volatile uint32_t lastCapture = 0;
-volatile uint32_t pwmPeriod = 0;
-volatile uint32_t pwmHighTime = 0;
-volatile float dutyCycle = 0;
-volatile float frequency = 0;
-volatile uint8_t isRisingEdge = 1;
-
-char buffer[10];
 float samples[SAMPLE_COUNT];
-float test = 0;
-float test2 = 0;
 
 /* USER CODE END PV */
 
@@ -181,6 +160,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_UART_Receive_IT(&huart1, &received_byte, 1);  // start IT receiving
+
 /* XBEE Configuration--------------------------------------------------------*/
   //Request and store XBee Serial Number Low
   if (requestParameter("ATSL\r", mySerialLow, sizeof(mySerialLow)) == XBEE_SUCCESS) {
@@ -193,7 +173,6 @@ int main(void)
       }
   }
 /* XBEE Configuration Ends--------------------------------------------------*/
-  HAL_GPIO_WritePin(GPIOA, Sense_CuttOff_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -289,11 +268,9 @@ float Read_ADC(void)
      adcValue = HAL_ADC_GetValue(&hadc1);  // Get the ADC value
 
     volatile float voltage = (adcValue / ADC_RESOLUTION) * V_REF;  // Convert ADC value to voltage
-    float zeroCurrentVoltage = 2.45;      // Sensor outputs 0.5 * Vcc at zero current
+    float zeroCurrentVoltage = 2.45;      // Measured sensor output voltage at zero current
     // Calculate current using sensor sensitivity (mV/A)
     float current = (voltage - zeroCurrentVoltage) / SENSITIVITY;  // in Amps
-    test = voltage;
-    test2= current;
     return current;
 }
 // Function to calculate the RMS value of the sampled current
