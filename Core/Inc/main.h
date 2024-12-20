@@ -68,7 +68,21 @@ void Error_Handler(void);
 #define LED_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
+#define V_REF 3.3 // ADC reference voltage (Vref) in volts
+#define ADC_RESOLUTION 4095.0  // ADC resolution (12-bit gives values from 0 to 4095)
+#define SENSITIVITY 0.185  // ACS712 sensitivity
+#define Data_BUFFER_SIZE 12   // Transmission Buffer size
+#define DEBOUNCE_DELAY_MS 50
+#define ADDRESS_HIGH 0x13A200  // High address on Xbee devices
+#define SAMPLE_COUNT 250 // Number of samples to take for RMS
 
+// External declarations for UART handle and buffers
+extern UART_HandleTypeDef huart1;          // UART handle
+extern uint8_t rx_buffer[Data_BUFFER_SIZE]; // Buffer to store received data
+extern uint8_t received_byte;              // Variable to store single received byte
+extern uint8_t mySerialLow[8];             // Array to store Serial Number Low
+extern uint8_t myDestLow[8];               // Array to store Destination Number Low
+extern volatile uint8_t data_received_flag; // Flag to indicate data reception completion
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

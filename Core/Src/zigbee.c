@@ -9,28 +9,23 @@
 
 #include <zigbee.h>
 
-// External declarations for UART handle and buffers
-extern UART_HandleTypeDef huart1;          // UART handle
-extern uint8_t rx_buffer[Data_BUFFER_SIZE]; // Buffer to store received data
-extern uint8_t received_byte;              // Variable to store single received byte
-extern uint8_t mySerialLow[8];             // Array to store Serial Number Low
-extern uint8_t myDestLow[8];               // Array to store Destination Number Low
-extern volatile uint8_t data_received_flag; // Flag to indicate data reception completion
+void enterCommandMode(void)
+{
+    char command_mode[3] = "+++";
+    // Send "+++" to enter AT command mode
+    HAL_UART_Transmit(&huart1, (uint8_t*)command_mode, strlen(command_mode), HAL_MAX_DELAY);
+    HAL_Delay(1000);  // Small delay for XBee to respond
+    // Receive the "OK" response from XBee
+    HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, 3);
+}
+
 
 /*
-int XBEE_SUCCESS;
-int XBEE_ERROR_RESPONSE;
-*/
-
-/*
- * Enter AT command mode
- * Request XBee Serial Number Low (ATSL)
- * Exit AT command mode
+ * Enter AT command mode, request parameter and exit AT command mode
+ * @param at_command: at command to enter
+ * @param output_buffer: xbee response for at command
+ * @param length: length of output buffer
  */
-
-
-
-
 int requestParameter(const char *at_command, uint8_t *output_buffer, size_t length) {
     // Clear buffer and reset flag
     memset(rx_buffer, 0, Data_BUFFER_SIZE);

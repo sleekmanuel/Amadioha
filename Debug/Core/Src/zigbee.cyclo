@@ -1,3 +1,4 @@
-../Core/Src/zigbee.c:34:5:requestParameter	6
-../Core/Src/zigbee.c:72:6:writeCommand	5
-../Core/Src/zigbee.c:103:6:setDestinationAddress	8
+../Core/Src/zigbee.c:16:6:enterCommandMode	1
+../Core/Src/zigbee.c:27:5:requestParameter	6
+../Core/Src/zigbee.c:65:6:writeCommand	5
+../Core/Src/zigbee.c:96:6:setDestinationAddress	8

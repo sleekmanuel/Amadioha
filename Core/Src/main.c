@@ -20,20 +20,20 @@
   *  also receives on and off command from Hub (interface from internet)
   ******************************************************************************
   *
-  *Receive Data frame via Zigbee Protocol
-  *Receive 	RxData[11]
-  *Receive 		  [0]: ATSL 1
-  *Receive 		  [1]: ATSL 2
-  *Receive 		  [2]: ATSL 3
-  *Receive 		  [3]: ATSL 4
-  *Receive 		  [4]: ATSL 5
-  *Receive 		  [5]: ATSL 6
-  *Receive 		  [6]: ATSL 7
-  *Receive 		  [7]: ATSL 8
-  *Receive 		  [8]: Control -> Command (C0) or Request (FF)
-  *Receive 		  [9]: Command Data -> Turn ON Load (0F) Turn off Load (0A)
-  *Receive 		  [10]: Request Data -> Current Data (01)
-  *Receive 		  [11]: '\r' End of Message
+  * Data frame via Zigbee Protocol
+  *Receive  	   [11]
+  *Receive 		   [0]: ATSL 1
+  *Receive 		   [1]: ATSL 2
+  *Receive 		   [2]: ATSL 3
+  *Receive 		   [3]: ATSL 4
+  *Receive 		   [4]: ATSL 5
+  *Receive 		   [5]: ATSL 6
+  *Receive 		   [6]: ATSL 7
+  *Receive 		   [7]: ATSL 8
+  *Receive 		   [8]: Control -> Command (C0) or Request (FF)
+  *Receive 		   [9]: Command Data -> Turn ON Load (0F) Turn off Load (0A)
+  *Receive 		   [10]: Request Data -> Current Data (01)
+  *Receive 		   [11]: '\r' End of Message
   *
   *Timers:
   *Timers:
@@ -63,13 +63,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define V_REF 3.3 // ADC reference voltage (Vref) in volts
-#define ADC_RESOLUTION 4095.0  // ADC resolution (12-bit gives values from 0 to 4095)
-#define SENSITIVITY 0.185  // ACS712 sensitivity
-#define Data_BUFFER_SIZE 12   // Transmission Buffer size
-#define DEBOUNCE_DELAY_MS 50
-#define ADDRESS_HIGH 0x13A200  // High address on Xbee devices
-#define SAMPLE_COUNT 250 // Number of samples to take for RMS
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -99,9 +93,7 @@ uint8_t Data;				   // Transmission data
 //ADC PV for Current reading
 float currentRMS = 0;  // Read current RMS value
 volatile uint16_t adcValue;
-
 volatile uint32_t lastDebounceTime = 0;
-
 float samples[SAMPLE_COUNT];
 
 /* USER CODE END PV */
