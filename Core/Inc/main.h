@@ -53,6 +53,7 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
+void StoreXBeeSerialLow(uint32_t serialLow);
 
 /* USER CODE END EFP */
 

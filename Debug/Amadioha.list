@@ -7,45 +7,45 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
   1 .text         0000b024  08000190  08000190  00001190  2**4
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .rodata       00000534  0800b1b8  0800b1b8  0000c1b8  2**3
+  2 .rodata       00000554  0800b1b8  0800b1b8  0000c1b8  2**3
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  3 .ARM.extab    00000000  0800b6ec  0800b6ec  0000d200  2**0
+  3 .ARM.extab    00000000  0800b70c  0800b70c  0000d200  2**0
                   CONTENTS
-  4 .ARM          00000008  0800b6ec  0800b6ec  0000c6ec  2**2
+  4 .ARM          00000008  0800b70c  0800b70c  0000c70c  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  5 .preinit_array 00000000  0800b6f4  0800b6f4  0000d200  2**0
+  5 .preinit_array 00000000  0800b714  0800b714  0000d200  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  6 .init_array   00000004  0800b6f4  0800b6f4  0000c6f4  2**2
+  6 .init_array   00000004  0800b714  0800b714  0000c714  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  7 .fini_array   00000004  0800b6f8  0800b6f8  0000c6f8  2**2
+  7 .fini_array   00000004  0800b718  0800b718  0000c718  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  8 .data         00000200  20000000  0800b6fc  0000d000  2**3
+  8 .data         00000200  20000000  0800b71c  0000d000  2**3
                   CONTENTS, ALLOC, LOAD, DATA
-  9 .bss          000006c0  20000200  0800b8fc  0000d200  2**2
+  9 .bss          000006c0  20000200  0800b91c  0000d200  2**2
                   ALLOC
- 10 ._user_heap_stack 00000600  200008c0  0800b8fc  0000d8c0  2**0
+ 10 ._user_heap_stack 00000600  200008c0  0800b91c  0000d8c0  2**0
                   ALLOC
  11 .ARM.attributes 00000030  00000000  00000000  0000d200  2**0
                   CONTENTS, READONLY
- 12 .debug_info   00015a36  00000000  00000000  0000d230  2**0
+ 12 .debug_info   00015b09  00000000  00000000  0000d230  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_abbrev 0000302e  00000000  00000000  00022c66  2**0
+ 13 .debug_abbrev 00003093  00000000  00000000  00022d39  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_aranges 000012e0  00000000  00000000  00025c98  2**3
+ 14 .debug_aranges 00001300  00000000  00000000  00025dd0  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_rnglists 00000e9b  00000000  00000000  00026f78  2**0
+ 15 .debug_rnglists 00000eb5  00000000  00000000  000270d0  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_macro  00024237  00000000  00000000  00027e13  2**0
+ 16 .debug_macro  0002423d  00000000  00000000  00027f85  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   00016a4a  00000000  00000000  0004c04a  2**0
+ 17 .debug_line   00016b62  00000000  00000000  0004c1c2  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    000dc906  00000000  00000000  00062a94  2**0
+ 18 .debug_str    000dc942  00000000  00000000  00062d24  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000043  00000000  00000000  0013f39a  2**0
+ 19 .comment      00000043  00000000  00000000  0013f666  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00006450  00000000  00000000  0013f3e0  2**2
+ 20 .debug_frame  000064e0  00000000  00000000  0013f6ac  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_line_str 00000068  00000000  00000000  00145830  2**0
+ 21 .debug_line_str 00000068  00000000  00000000  00145b8c  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -1765,7 +1765,7 @@ int main(void)
  800126c:	f004 f88e 	bl	800538c <HAL_UART_Receive_IT>
 
 /* XBEE Configuration--------------------------------------------------------*/
-  //Request and store XBee Serial Number Low
+ // Request and store XBee Serial Number Low
   if (requestParameter("ATSL\r", mySerialLow, sizeof(mySerialLow)) == XBEE_SUCCESS) {
  8001270:	2208      	movs	r2, #8
  8001272:	4926      	ldr	r1, [pc, #152]	@ (800130c <main+0xc8>)
@@ -3538,11 +3538,11 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
  8001c14:	40021000 	.word	0x40021000
 
 08001c18 <requestParameter>:
-    // Receive the "OK" response from XBee
-    HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, 3);
-}
-
-
+ * Enter AT command mode, request parameter and exit AT command mode
+ * @param at_command: at command to enter
+ * @param output_buffer: xbee response for at command
+ * @param length: length of output buffer
+ */
 int requestParameter(const char *at_command, uint8_t *output_buffer, size_t length) {
  8001c18:	b580      	push	{r7, lr}
  8001c1a:	b088      	sub	sp, #32
@@ -3805,7 +3805,7 @@ LoopForever:
   ldr r1, =_edata
  8001dac:	20000200 	.word	0x20000200
   ldr r2, =_sidata
- 8001db0:	0800b6fc 	.word	0x0800b6fc
+ 8001db0:	0800b71c 	.word	0x0800b71c
   ldr r2, =_sbss
  8001db4:	20000200 	.word	0x20000200
   ldr r4, =_ebss
@@ -8615,7 +8615,7 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(RCC_OscInitTypeDef  *RCC_OscInitStruct)
  8003990:	6013      	str	r3, [r2, #0]
  8003992:	e013      	b.n	80039bc <HAL_RCC_OscConfig+0x298>
  8003994:	40021000 	.word	0x40021000
- 8003998:	0800b27c 	.word	0x0800b27c
+ 8003998:	0800b298 	.word	0x0800b298
  800399c:	20000018 	.word	0x20000018
  80039a0:	2000001c 	.word	0x2000001c
  80039a4:	4ba0      	ldr	r3, [pc, #640]	@ (8003c28 <HAL_RCC_OscConfig+0x504>)
@@ -10005,7 +10005,7 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(RCC_ClkInitTypeDef  *RCC_ClkInitStruct, ui
  8004136:	bd80      	pop	{r7, pc}
  8004138:	40022000 	.word	0x40022000
  800413c:	40021000 	.word	0x40021000
- 8004140:	0800b27c 	.word	0x0800b27c
+ 8004140:	0800b298 	.word	0x0800b298
  8004144:	20000018 	.word	0x20000018
  8004148:	2000001c 	.word	0x2000001c
 
@@ -10210,7 +10210,7 @@ uint32_t HAL_RCC_GetSysClockFreq(void)
  8004250:	4770      	bx	lr
  8004252:	bf00      	nop
  8004254:	40021000 	.word	0x40021000
- 8004258:	0800b294 	.word	0x0800b294
+ 8004258:	0800b2b0 	.word	0x0800b2b0
  800425c:	00f42400 	.word	0x00f42400
  8004260:	007a1200 	.word	0x007a1200
 
@@ -10259,7 +10259,7 @@ uint32_t HAL_RCC_GetPCLK1Freq(void)
  800429c:	4618      	mov	r0, r3
  800429e:	bd80      	pop	{r7, pc}
  80042a0:	40021000 	.word	0x40021000
- 80042a4:	0800b28c 	.word	0x0800b28c
+ 80042a4:	0800b2a8 	.word	0x0800b2a8
 
 080042a8 <HAL_RCC_GetPCLK2Freq>:
   * @note   Each time PCLK2 changes, this function must be called to update the
@@ -10286,7 +10286,7 @@ uint32_t HAL_RCC_GetPCLK2Freq(void)
  80042c8:	4618      	mov	r0, r3
  80042ca:	bd80      	pop	{r7, pc}
  80042cc:	40021000 	.word	0x40021000
- 80042d0:	0800b28c 	.word	0x0800b28c
+ 80042d0:	0800b2a8 	.word	0x0800b2a8
 
 080042d4 <RCC_SetFlashLatencyFromMSIRange>:
             voltage range.
@@ -17343,11 +17343,11 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  8006c9c:	e7ee      	b.n	8006c7c <_printf_float+0x2a4>
  8006c9e:	bf00      	nop
  8006ca0:	7fefffff 	.word	0x7fefffff
- 8006ca4:	0800b2c4 	.word	0x0800b2c4
- 8006ca8:	0800b2c8 	.word	0x0800b2c8
- 8006cac:	0800b2cc 	.word	0x0800b2cc
- 8006cb0:	0800b2d0 	.word	0x0800b2d0
- 8006cb4:	0800b2d4 	.word	0x0800b2d4
+ 8006ca4:	0800b2e0 	.word	0x0800b2e0
+ 8006ca8:	0800b2e4 	.word	0x0800b2e4
+ 8006cac:	0800b2e8 	.word	0x0800b2e8
+ 8006cb0:	0800b2ec 	.word	0x0800b2ec
+ 8006cb4:	0800b2f0 	.word	0x0800b2f0
  8006cb8:	6da3      	ldr	r3, [r4, #88]	@ 0x58
  8006cba:	f8dd a028 	ldr.w	sl, [sp, #40]	@ 0x28
  8006cbe:	4553      	cmp	r3, sl
@@ -17827,8 +17827,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  8007138:	f104 0619 	add.w	r6, r4, #25
  800713c:	e7f5      	b.n	800712a <_printf_i+0x222>
  800713e:	bf00      	nop
- 8007140:	0800b2d6 	.word	0x0800b2d6
- 8007144:	0800b2e7 	.word	0x0800b2e7
+ 8007140:	0800b2f2 	.word	0x0800b2f2
+ 8007144:	0800b303 	.word	0x0800b303
 
 08007148 <_scanf_float>:
  8007148:	e92d 4ff0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
@@ -18224,8 +18224,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  8007560:	f04f 0900 	mov.w	r9, #0
  8007564:	e629      	b.n	80071ba <_scanf_float+0x72>
  8007566:	bf00      	nop
- 8007568:	0800b2f8 	.word	0x0800b2f8
- 800756c:	0800b6eb 	.word	0x0800b6eb
+ 8007568:	0800b314 	.word	0x0800b314
+ 800756c:	0800b70b 	.word	0x0800b70b
 
 08007570 <siprintf>:
  8007570:	b40e      	push	{r1, r2, r3}
@@ -18697,8 +18697,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  80079bc:	e785      	b.n	80078ca <_strtod_l+0x192>
  80079be:	f04f 0c01 	mov.w	ip, #1
  80079c2:	e7f8      	b.n	80079b6 <_strtod_l+0x27e>
- 80079c4:	0800b314 	.word	0x0800b314
- 80079c8:	0800b2fd 	.word	0x0800b2fd
+ 80079c4:	0800b330 	.word	0x0800b330
+ 80079c8:	0800b319 	.word	0x0800b319
  80079cc:	7ff00000 	.word	0x7ff00000
  80079d0:	9a19      	ldr	r2, [sp, #100]	@ 0x64
  80079d2:	1c51      	adds	r1, r2, #1
@@ -18991,13 +18991,13 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  8007cae:	6013      	str	r3, [r2, #0]
  8007cb0:	e768      	b.n	8007b84 <_strtod_l+0x44c>
  8007cb2:	bf00      	nop
- 8007cb4:	0800b2d1 	.word	0x0800b2d1
- 8007cb8:	0800b300 	.word	0x0800b300
- 8007cbc:	0800b2c9 	.word	0x0800b2c9
- 8007cc0:	0800b45c 	.word	0x0800b45c
- 8007cc4:	0800b6eb 	.word	0x0800b6eb
- 8007cc8:	0800b5e8 	.word	0x0800b5e8
- 8007ccc:	0800b5c0 	.word	0x0800b5c0
+ 8007cb4:	0800b2ed 	.word	0x0800b2ed
+ 8007cb8:	0800b31c 	.word	0x0800b31c
+ 8007cbc:	0800b2e5 	.word	0x0800b2e5
+ 8007cc0:	0800b47c 	.word	0x0800b47c
+ 8007cc4:	0800b70b 	.word	0x0800b70b
+ 8007cc8:	0800b608 	.word	0x0800b608
+ 8007ccc:	0800b5e0 	.word	0x0800b5e0
  8007cd0:	7ff00000 	.word	0x7ff00000
  8007cd4:	7ca00000 	.word	0x7ca00000
  8007cd8:	7fefffff 	.word	0x7fefffff
@@ -19283,7 +19283,7 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  8007f86:	6013      	str	r3, [r2, #0]
  8007f88:	e600      	b.n	8007b8c <_strtod_l+0x454>
  8007f8a:	bf00      	nop
- 8007f8c:	0800b328 	.word	0x0800b328
+ 8007f8c:	0800b348 	.word	0x0800b348
  8007f90:	fffffc02 	.word	0xfffffc02
  8007f94:	39500000 	.word	0x39500000
  8007f98:	7ff00000 	.word	0x7ff00000
@@ -19709,7 +19709,7 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  80083f4:	d1f6      	bne.n	80083e4 <_strtol_l.constprop.0+0xd8>
  80083f6:	f8c8 1000 	str.w	r1, [r8]
  80083fa:	e794      	b.n	8008326 <_strtol_l.constprop.0+0x1a>
- 80083fc:	0800b359 	.word	0x0800b359
+ 80083fc:	0800b379 	.word	0x0800b379
 
 08008400 <_strtol_r>:
  8008400:	f7ff bf84 	b.w	800830c <_strtol_l.constprop.0>
@@ -19823,10 +19823,10 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  80084da:	4798      	blx	r3
  80084dc:	3601      	adds	r6, #1
  80084de:	e7f2      	b.n	80084c6 <__libc_init_array+0x1e>
- 80084e0:	0800b6f4 	.word	0x0800b6f4
- 80084e4:	0800b6f4 	.word	0x0800b6f4
- 80084e8:	0800b6f4 	.word	0x0800b6f4
- 80084ec:	0800b6f8 	.word	0x0800b6f8
+ 80084e0:	0800b714 	.word	0x0800b714
+ 80084e4:	0800b714 	.word	0x0800b714
+ 80084e8:	0800b714 	.word	0x0800b714
+ 80084ec:	0800b718 	.word	0x0800b718
 
 080084f0 <__retarget_lock_init_recursive>:
  80084f0:	4770      	bx	lr
@@ -20252,15 +20252,15 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  8008904:	3fc68a28 	.word	0x3fc68a28
  8008908:	509f79fb 	.word	0x509f79fb
  800890c:	3fd34413 	.word	0x3fd34413
- 8008910:	0800b466 	.word	0x0800b466
- 8008914:	0800b47d 	.word	0x0800b47d
+ 8008910:	0800b486 	.word	0x0800b486
+ 8008914:	0800b49d 	.word	0x0800b49d
  8008918:	7ff00000 	.word	0x7ff00000
- 800891c:	0800b2d5 	.word	0x0800b2d5
+ 800891c:	0800b2f1 	.word	0x0800b2f1
  8008920:	3ff80000 	.word	0x3ff80000
- 8008924:	0800b5e8 	.word	0x0800b5e8
- 8008928:	0800b4d5 	.word	0x0800b4d5
- 800892c:	0800b462 	.word	0x0800b462
- 8008930:	0800b2d4 	.word	0x0800b2d4
+ 8008924:	0800b608 	.word	0x0800b608
+ 8008928:	0800b4f5 	.word	0x0800b4f5
+ 800892c:	0800b482 	.word	0x0800b482
+ 8008930:	0800b2f0 	.word	0x0800b2f0
  8008934:	f8db 301c 	ldr.w	r3, [fp, #28]
  8008938:	6018      	str	r0, [r3, #0]
  800893a:	9b07      	ldr	r3, [sp, #28]
@@ -20512,8 +20512,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  8008bfa:	f7f7 fcfd 	bl	80005f8 <__aeabi_dmul>
  8008bfe:	e9cd 0102 	strd	r0, r1, [sp, #8]
  8008c02:	e7c4      	b.n	8008b8e <_dtoa_r+0x546>
- 8008c04:	0800b5e8 	.word	0x0800b5e8
- 8008c08:	0800b5c0 	.word	0x0800b5c0
+ 8008c04:	0800b608 	.word	0x0800b608
+ 8008c08:	0800b5e0 	.word	0x0800b5e0
  8008c0c:	3ff00000 	.word	0x3ff00000
  8008c10:	40240000 	.word	0x40240000
  8008c14:	401c0000 	.word	0x401c0000
@@ -21115,8 +21115,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  80091c0:	f000 fe6c 	bl	8009e9c <__multadd>
  80091c4:	4681      	mov	r9, r0
  80091c6:	e7ea      	b.n	800919e <_dtoa_r+0xb56>
- 80091c8:	0800b4d5 	.word	0x0800b4d5
- 80091cc:	0800b459 	.word	0x0800b459
+ 80091c8:	0800b4f5 	.word	0x0800b4f5
+ 80091cc:	0800b479 	.word	0x0800b479
 
 080091d0 <rshift>:
  80091d0:	6903      	ldr	r3, [r0, #16]
@@ -21485,9 +21485,9 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800954a:	2b00      	cmp	r3, #0
  800954c:	d1dd      	bne.n	800950a <__gethex+0x26a>
  800954e:	e7ee      	b.n	800952e <__gethex+0x28e>
- 8009550:	0800b2fd 	.word	0x0800b2fd
- 8009554:	0800b4d5 	.word	0x0800b4d5
- 8009558:	0800b4e6 	.word	0x0800b4e6
+ 8009550:	0800b319 	.word	0x0800b319
+ 8009554:	0800b4f5 	.word	0x0800b4f5
+ 8009558:	0800b506 	.word	0x0800b506
  800955c:	1e6f      	subs	r7, r5, #1
  800955e:	f1b9 0f00 	cmp.w	r9, #0
  8009562:	d130      	bne.n	80095c6 <__gethex+0x326>
@@ -21622,7 +21622,7 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  80096b6:	42b0      	cmp	r0, r6
  80096b8:	dbe7      	blt.n	800968a <__gethex+0x3ea>
  80096ba:	e7f0      	b.n	800969e <__gethex+0x3fe>
- 80096bc:	0800b4d5 	.word	0x0800b4d5
+ 80096bc:	0800b4f5 	.word	0x0800b4f5
 
 080096c0 <L_shift>:
  80096c0:	f1c2 0208 	rsb	r2, r2, #8
@@ -22064,11 +22064,11 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  8009ad4:	4638      	mov	r0, r7
  8009ad6:	f7fd fa17 	bl	8006f08 <_printf_i>
  8009ada:	e7ed      	b.n	8009ab8 <_svfiprintf_r+0x1c0>
- 8009adc:	0800b546 	.word	0x0800b546
- 8009ae0:	0800b550 	.word	0x0800b550
+ 8009adc:	0800b566 	.word	0x0800b566
+ 8009ae0:	0800b570 	.word	0x0800b570
  8009ae4:	080069d9 	.word	0x080069d9
  8009ae8:	08009843 	.word	0x08009843
- 8009aec:	0800b54c 	.word	0x0800b54c
+ 8009aec:	0800b56c 	.word	0x0800b56c
 
 08009af0 <malloc>:
  8009af0:	4b02      	ldr	r3, [pc, #8]	@ (8009afc <malloc+0xc>)
@@ -22457,8 +22457,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  8009e48:	e9c0 3303 	strd	r3, r3, [r0, #12]
  8009e4c:	e7f7      	b.n	8009e3e <_Balloc+0x66>
  8009e4e:	bf00      	nop
- 8009e50:	0800b466 	.word	0x0800b466
- 8009e54:	0800b557 	.word	0x0800b557
+ 8009e50:	0800b486 	.word	0x0800b486
+ 8009e54:	0800b577 	.word	0x0800b577
 
 08009e58 <_Bfree>:
  8009e58:	b570      	push	{r4, r5, r6, lr}
@@ -22486,8 +22486,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  8009e8c:	6021      	str	r1, [r4, #0]
  8009e8e:	f843 4022 	str.w	r4, [r3, r2, lsl #2]
  8009e92:	bd70      	pop	{r4, r5, r6, pc}
- 8009e94:	0800b466 	.word	0x0800b466
- 8009e98:	0800b557 	.word	0x0800b557
+ 8009e94:	0800b486 	.word	0x0800b486
+ 8009e98:	0800b577 	.word	0x0800b577
 
 08009e9c <__multadd>:
  8009e9c:	e92d 41f0 	stmdb	sp!, {r4, r5, r6, r7, r8, lr}
@@ -22541,8 +22541,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  8009f18:	6125      	str	r5, [r4, #16]
  8009f1a:	4620      	mov	r0, r4
  8009f1c:	e8bd 81f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, pc}
- 8009f20:	0800b4d5 	.word	0x0800b4d5
- 8009f24:	0800b557 	.word	0x0800b557
+ 8009f20:	0800b4f5 	.word	0x0800b4f5
+ 8009f24:	0800b577 	.word	0x0800b577
 
 08009f28 <__s2b>:
  8009f28:	e92d 43f8 	stmdb	sp!, {r3, r4, r5, r6, r7, r8, r9, lr}
@@ -22603,8 +22603,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  8009fac:	f7ff ff76 	bl	8009e9c <__multadd>
  8009fb0:	e7ee      	b.n	8009f90 <__s2b+0x68>
  8009fb2:	bf00      	nop
- 8009fb4:	0800b4d5 	.word	0x0800b4d5
- 8009fb8:	0800b557 	.word	0x0800b557
+ 8009fb4:	0800b4f5 	.word	0x0800b4f5
+ 8009fb8:	0800b577 	.word	0x0800b577
 
 08009fbc <__hi0bits>:
  8009fbc:	f5b0 3f80 	cmp.w	r0, #65536	@ 0x10000
@@ -22694,8 +22694,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800a072:	6103      	str	r3, [r0, #16]
  800a074:	bd10      	pop	{r4, pc}
  800a076:	bf00      	nop
- 800a078:	0800b4d5 	.word	0x0800b4d5
- 800a07c:	0800b557 	.word	0x0800b557
+ 800a078:	0800b4f5 	.word	0x0800b4f5
+ 800a07c:	0800b577 	.word	0x0800b577
 
 0800a080 <__multiply>:
  800a080:	e92d 4ff0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
@@ -22814,8 +22814,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800a1c6:	e799      	b.n	800a0fc <__multiply+0x7c>
  800a1c8:	3e01      	subs	r6, #1
  800a1ca:	e79b      	b.n	800a104 <__multiply+0x84>
- 800a1cc:	0800b4d5 	.word	0x0800b4d5
- 800a1d0:	0800b557 	.word	0x0800b557
+ 800a1cc:	0800b4f5 	.word	0x0800b4f5
+ 800a1d0:	0800b577 	.word	0x0800b577
 
 0800a1d4 <__pow5mult>:
  800a1d4:	e92d 43f8 	stmdb	sp!, {r3, r4, r5, r6, r7, r8, r9, lr}
@@ -22883,9 +22883,9 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800a274:	4630      	mov	r0, r6
  800a276:	e8bd 83f8 	ldmia.w	sp!, {r3, r4, r5, r6, r7, r8, r9, pc}
  800a27a:	bf00      	nop
- 800a27c:	0800b5b0 	.word	0x0800b5b0
- 800a280:	0800b466 	.word	0x0800b466
- 800a284:	0800b557 	.word	0x0800b557
+ 800a27c:	0800b5d0 	.word	0x0800b5d0
+ 800a280:	0800b486 	.word	0x0800b486
+ 800a284:	0800b577 	.word	0x0800b577
 
 0800a288 <__lshift>:
  800a288:	e92d 47f0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, lr}
@@ -22964,8 +22964,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800a352:	d8f9      	bhi.n	800a348 <__lshift+0xc0>
  800a354:	e7ea      	b.n	800a32c <__lshift+0xa4>
  800a356:	bf00      	nop
- 800a358:	0800b4d5 	.word	0x0800b4d5
- 800a35c:	0800b557 	.word	0x0800b557
+ 800a358:	0800b4f5 	.word	0x0800b4f5
+ 800a35c:	0800b577 	.word	0x0800b577
 
 0800a360 <__mcmp>:
  800a360:	690a      	ldr	r2, [r1, #16]
@@ -23101,8 +23101,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800a4b2:	3f01      	subs	r7, #1
  800a4b4:	e7e7      	b.n	800a486 <__mdiff+0xee>
  800a4b6:	bf00      	nop
- 800a4b8:	0800b4d5 	.word	0x0800b4d5
- 800a4bc:	0800b557 	.word	0x0800b557
+ 800a4b8:	0800b4f5 	.word	0x0800b4f5
+ 800a4bc:	0800b577 	.word	0x0800b577
 
 0800a4c0 <__ulp>:
  800a4c0:	b082      	sub	sp, #8
@@ -23252,8 +23252,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800a63e:	f7ff fcbd 	bl	8009fbc <__hi0bits>
  800a642:	ebc0 1042 	rsb	r0, r0, r2, lsl #5
  800a646:	e7e5      	b.n	800a614 <__d2b+0x74>
- 800a648:	0800b4d5 	.word	0x0800b4d5
- 800a64c:	0800b557 	.word	0x0800b557
+ 800a648:	0800b4f5 	.word	0x0800b4f5
+ 800a64c:	0800b577 	.word	0x0800b577
 
 0800a650 <__ratio>:
  800a650:	e92d 4ff0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
@@ -23842,9 +23842,9 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800ab74:	e7f4      	b.n	800ab60 <__assert_func+0x14>
  800ab76:	bf00      	nop
  800ab78:	2000019c 	.word	0x2000019c
- 800ab7c:	0800b6eb 	.word	0x0800b6eb
- 800ab80:	0800b6bd 	.word	0x0800b6bd
- 800ab84:	0800b6b0 	.word	0x0800b6b0
+ 800ab7c:	0800b70b 	.word	0x0800b70b
+ 800ab80:	0800b6dd 	.word	0x0800b6dd
+ 800ab84:	0800b6d0 	.word	0x0800b6d0
 
 0800ab88 <_calloc_r>:
  800ab88:	b570      	push	{r4, r5, r6, lr}
@@ -24231,11 +24231,11 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800aeec:	4630      	mov	r0, r6
  800aeee:	f7fc f80b 	bl	8006f08 <_printf_i>
  800aef2:	e7e4      	b.n	800aebe <_vfiprintf_r+0x1e6>
- 800aef4:	0800b546 	.word	0x0800b546
- 800aef8:	0800b550 	.word	0x0800b550
+ 800aef4:	0800b566 	.word	0x0800b566
+ 800aef8:	0800b570 	.word	0x0800b570
  800aefc:	080069d9 	.word	0x080069d9
  800af00:	0800acb5 	.word	0x0800acb5
- 800af04:	0800b54c 	.word	0x0800b54c
+ 800af04:	0800b56c 	.word	0x0800b56c
 
 0800af08 <_raise_r>:
  800af08:	291f      	cmp	r1, #31

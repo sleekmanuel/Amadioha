@@ -63,7 +63,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define XBEE_ADDRESS_HIGH 0x13A200  // High address on Xbee devices
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -81,8 +81,8 @@ volatile uint8_t overflow_flag = 0;		  // Flag to indicate UART_Rx overflow
 volatile uint8_t data_received_flag = 0;  // Flag to indicate data reception
 uint8_t rx_buffer[Data_BUFFER_SIZE];             // Buffer to store received data
 uint8_t received_byte;		  // Process UART_Rx by byte
-uint8_t Load_Active[11] = {0x34, 0x32, 0x32, 0x36, 0x38, 0x30, 0x30, 0x45, 0xB3, 0x11, 0x0D};	// load active feedback
-uint8_t Load_Inactive[11] = {0x34, 0x32, 0x32, 0x36, 0x38, 0x30, 0x30, 0x45, 0xB3, 0xAA, 0x0D}; // load inactive feedback
+uint8_t Load_Active[11] = {0x34, 0x32, 0x32, 0x39, 0x30, 0x45, 0x34, 0x37, 0xB3, 0x11, 0x0D};	// load active feedback
+uint8_t Load_Inactive[11] = {0x34, 0x32, 0x32, 0x39, 0x30, 0x45, 0x34, 0x37, 0xB3, 0xAA, 0x0D}; // load inactive feedback
 
 //Xbee transmission dataframe
 uint8_t mySerialLow[8];
@@ -109,7 +109,8 @@ float Read_ADC(void);
 float Calculate_RMS(float samples[], int sampleCount);
 void handleSwitchControl(uint8_t Data);
 void handleCurrentControl(void);
-
+void RQPowerLevel();
+void TxPowerLevel(uint8_t Level);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -154,7 +155,7 @@ int main(void)
   HAL_UART_Receive_IT(&huart1, &received_byte, 1);  // start IT receiving
 
 /* XBEE Configuration--------------------------------------------------------*/
-  //Request and store XBee Serial Number Low
+ // Request and store XBee Serial Number Low
   if (requestParameter("ATSL\r", mySerialLow, sizeof(mySerialLow)) == XBEE_SUCCESS) {
       //printf("Serial Number Low: %s\n", serial_number_low);
   } else {
@@ -164,6 +165,9 @@ int main(void)
     	  HAL_Delay(100);
       }
   }
+//  enterCommandMode();
+//   RQPowerLevel();
+
 /* XBEE Configuration Ends--------------------------------------------------*/
   /* USER CODE END 2 */
 

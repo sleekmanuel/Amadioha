@@ -168,3 +168,101 @@ void setDestinationAddress(uint32_t DH, uint32_t DL)
     }
 }
 
+/**
+ * @brief  Change the XBee Transmit Power Level (ATPL command).
+ * @param  Level: Power level (0 to 4, where 4 is the highest).
+ */
+void TxPowerLevel(uint8_t Level)
+{
+	char PL[10];
+    // Clear rx_buffer and reset the data_received_flag
+    memset(rx_buffer, 0, Data_BUFFER_SIZE);
+    data_received_flag = 0;
+   // char at_command[] = "ATPL2";  // Command to request Serial Number Low
+    // Format the AT commands
+    snprintf(PL, sizeof(PL), "ATPL %01X\r", (unsigned int)Level);
+    char write[] = "ATWR\r";
+    //send ATPL command
+    HAL_UART_Transmit(&huart1, (uint8_t*)PL, strlen(PL), HAL_MAX_DELAY);
+    HAL_UART_Receive_IT(&huart1, &received_byte, 1);
+    // Wait for reception to complete
+    while (!data_received_flag);
+    if (strncmp((char *)rx_buffer, "OK", 2) == 0)
+    {
+    	data_received_flag = 0;
+        memset(rx_buffer, 0, Data_BUFFER_SIZE);
+        HAL_UART_Transmit(&huart1, (uint8_t*)write, strlen(write), HAL_MAX_DELAY);
+        HAL_UART_Receive_IT(&huart1, &received_byte, 1);
+        // Wait for reception to complete
+        while (!data_received_flag);
+        if (strncmp((char *)rx_buffer, "OK", 2) != 0)
+        {
+        	// Handle memory write failure
+             printf("Failed to write changes to memory!\n");
+       }
+    }
+    memset(rx_buffer, 0, Data_BUFFER_SIZE);
+    data_received_flag = 0;
+}
+
+void FactoryReset(){
+	// Clear rx_buffer and reset the data_received_flag
+	memset(rx_buffer, 0, Data_BUFFER_SIZE);
+	data_received_flag = 0;
+	char at_command[] = "ATRE\r";  // Command for factory reset
+	char write[] = "ATWR\r";		// Command to write to NVMe
+	//send ATPL command
+	HAL_UART_Transmit(&huart1, (uint8_t*)at_command, strlen(at_command), HAL_MAX_DELAY);
+	HAL_UART_Receive_IT(&huart1, &received_byte, 1);
+	while (!data_received_flag);
+	if (strncmp((char *)rx_buffer, "OK", 2) == 0)
+	    {
+	    	data_received_flag = 0;
+	        memset(rx_buffer, 0, Data_BUFFER_SIZE);
+	        HAL_UART_Transmit(&huart1, (uint8_t*)write, strlen(write), HAL_MAX_DELAY);
+	        HAL_UART_Receive_IT(&huart1, &received_byte, 1);
+	        // Wait for reception to complete
+	        while (!data_received_flag);
+	        if (strncmp((char *)rx_buffer, "OK", 2) != 0)
+	        {
+	        	// Handle memory write failure
+	             printf("Failed to write changes to memory!\n");
+	       }
+	    }
+	    memset(rx_buffer, 0, Data_BUFFER_SIZE);
+	    data_received_flag = 0;
+}
+
+/**
+ * @brief  Request current power level (ATPL command).
+ */
+void RQPowerLevel()
+{
+    // Clear rx_buffer and reset the data_received_flag
+    memset(rx_buffer, 0, Data_BUFFER_SIZE);
+    data_received_flag = 0;
+    char at_command[] = "ATPL\r";  // Command to request Serial Number Low
+    //send ATPL command
+    HAL_UART_Transmit(&huart1, (uint8_t*)at_command, strlen(at_command), HAL_MAX_DELAY);
+    HAL_UART_Receive_IT(&huart1, &received_byte, 1);
+    // Wait for reception to complete
+    while (!data_received_flag);
+   // memset(rx_buffer, 0, Data_BUFFER_SIZE);
+    //data_received_flag = 0;
+}
+
+/**
+ * @brief  Exit XBee AT Command Mode (ATCN command).
+ */
+void exitCommandMode(void)
+{
+    char exit_command[] = "ATCN\r";  // Command to exit AT command mode
+
+    // Send ATCN command to exit command mode
+    HAL_UART_Transmit(&huart1, (uint8_t*)exit_command, strlen(exit_command), HAL_MAX_DELAY);
+    HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, 3);
+    // Wait for reception to complete
+    while (data_received_flag);
+    data_received_flag = 0;
+    memset(rx_buffer, 0, Data_BUFFER_SIZE);
+}
