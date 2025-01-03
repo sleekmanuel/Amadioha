@@ -63,7 +63,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define XBEE_ADDRESS_HIGH 0x13A200  // High address on Xbee devices
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -77,15 +77,18 @@
 ///////// XBee PV ////////////////////
 uint8_t loadActive = 0;				 // Status for active Load
 uint8_t previousLoadActive = 0;		// Store previous load state
-volatile uint8_t overflow_flag = 0;		  // Flag to indicate UART_Rx overflow
-volatile uint8_t data_received_flag = 0;  // Flag to indicate data reception
-uint8_t rx_buffer[Data_BUFFER_SIZE];             // Buffer to store received data
-uint8_t received_byte;		  // Process UART_Rx by byte
 uint8_t Load_Active[11] = {0x34, 0x32, 0x32, 0x39, 0x30, 0x45, 0x34, 0x37, 0xB3, 0x11, 0x0D};	// load active feedback
 uint8_t Load_Inactive[11] = {0x34, 0x32, 0x32, 0x39, 0x30, 0x45, 0x34, 0x37, 0xB3, 0xAA, 0x0D}; // load inactive feedback
 
+ XBeeModule XBeeData =
+ {		//initialization
+		.rx_buffer = {0},
+		.received_byte = 0,
+		.data_received_flag = 0,
+		.overflow_flag = 0,
+		.myAddress = {0}
+};
 //Xbee transmission dataframe
-uint8_t mySerialLow[8];
 uint8_t myDestLow[8];			// store destination address low
 uint8_t Control;                //used to determine if message is a request or command
 uint8_t Data;				   // Transmission data
@@ -152,11 +155,12 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
-  HAL_UART_Receive_IT(&huart1, &received_byte, 1);  // start IT receiving
+  HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);  // start IT receiving
+
 
 /* XBEE Configuration--------------------------------------------------------*/
  // Request and store XBee Serial Number Low
-  if (requestParameter("ATSL\r", mySerialLow, sizeof(mySerialLow)) == XBEE_SUCCESS) {
+  if (requestParameter("ATSL\r", XBeeData.myAddress, sizeof(XBeeData.myAddress)) == XBEE_SUCCESS) {
       //printf("Serial Number Low: %s\n", serial_number_low);
   } else {
 	  //Blink LED in a loop to indicate issue
@@ -173,16 +177,25 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  /*        BLICK TWICE FOR SUCCESSFUL INITIALIZATION       */
+  for(int j = 0; j < 2; j++)
+  {
+	  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+	  HAL_Delay(500);
+	  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+	  HAL_Delay(500);
+  }
+
+
   while (1)
   {
-	 // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
-
-	  if (data_received_flag) {
+	  if (XBeeData.data_received_flag) {
 	           // Check if the message is meant for me
-	           if (memcmp(mySerialLow, rx_buffer, 8) == 0) {
+	           if (memcmp(XBeeData.myAddress, XBeeData.rx_buffer, 8) == 0) {
 	               // Extract and handle command and data
-	               Control = rx_buffer[8];
-	               Data = rx_buffer[9];
+	               Control = XBeeData.rx_buffer[8];
+	               Data = XBeeData.rx_buffer[9];
 
 	               if (Control == 0xC0) {
 	                   handleSwitchControl(Data);
@@ -192,9 +205,9 @@ int main(void)
 	           }
 
 	           // Reset flags and buffers after processing
-	           data_received_flag = 0;
-	           memset(rx_buffer, 0, Data_BUFFER_SIZE);
-	           HAL_UART_Receive_IT(&huart1, &received_byte, 1);
+	           XBeeData.data_received_flag = 0;
+	           memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+	           HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
 	       }
 
     /* USER CODE END WHILE */
@@ -399,20 +412,20 @@ uint32_t Parse_RxSLData(uint8_t data[])
      static uint8_t index = 0;
 
      if (huart->Instance == USART1) {
-         if (index < Data_BUFFER_SIZE - 1) {
-             rx_buffer[index++] = received_byte;
+         if (index < DATA_BUFFER_SIZE - 1) {
+        	 XBeeData.rx_buffer[index++] = XBeeData.received_byte;
 
-             if (received_byte == '\r') {  // End of response
-                 data_received_flag = 1;
-                 rx_buffer[index] = '\0';  // Null-terminate
+             if (XBeeData.received_byte == '\r') {  // End of response
+            	 XBeeData.data_received_flag = 1;
+                 XBeeData.rx_buffer[index] = '\0';  // Null-terminate
                  index = 0;  // Reset for next reception
              }
          } else {
-             overflow_flag = 1;  // Signal buffer overflow
+        	 XBeeData.overflow_flag = 1;  // Signal buffer overflow
              index = 0;  // Optionally reset the buffer
          }
 
-         HAL_UART_Receive_IT(&huart1, &received_byte, 1);  // Continue receiving
+         HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);  // Continue receiving
      }
  }
 /* USER CODE END 4 */
