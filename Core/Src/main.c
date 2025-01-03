@@ -330,7 +330,7 @@ void handleSwitchControl(uint8_t Data)
 // Function to handle Control == 0xFF and Data == 0x01
 void handleCurrentControl()
 {
-    // Take sample of 500 current readings
+    // Take sample of SAMPLE_COUNT of current readings
     for (int i = 0; i < SAMPLE_COUNT; i++) {
         samples[i] = Read_ADC();
         HAL_Delay(1);

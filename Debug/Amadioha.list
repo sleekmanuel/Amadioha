@@ -2297,7 +2297,7 @@ void handleCurrentControl()
  80015f0:	b580      	push	{r7, lr}
  80015f2:	b08a      	sub	sp, #40	@ 0x28
  80015f4:	af00      	add	r7, sp, #0
-    // Take sample of 500 current readings
+    // Take sample of SAMPLE_COUNT of current readings
     for (int i = 0; i < SAMPLE_COUNT; i++) {
  80015f6:	2300      	movs	r3, #0
  80015f8:	627b      	str	r3, [r7, #36]	@ 0x24
