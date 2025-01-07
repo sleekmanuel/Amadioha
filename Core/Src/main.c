@@ -63,7 +63,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define CURRENT_RESPONSE_SIZE 15
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -98,6 +98,8 @@ float currentRMS = 0;  // Read current RMS value
 volatile uint16_t adcValue;
 volatile uint32_t lastDebounceTime = 0;
 float samples[SAMPLE_COUNT];
+char buffer[32];
+char currentResponse[CURRENT_RESPONSE_SIZE];
 
 /* USER CODE END PV */
 
@@ -174,16 +176,15 @@ int main(void)
 
 /* XBEE Configuration Ends--------------------------------------------------*/
   /* USER CODE END 2 */
-
+  memcpy(currentResponse, XBeeData.myAddress, 8);
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
   /*        BLICK TWICE FOR SUCCESSFUL INITIALIZATION       */
+  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
   for(int j = 0; j < 2; j++)
   {
-	  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
-	  HAL_Delay(500);
-	  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+	  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 	  HAL_Delay(500);
   }
 
@@ -336,10 +337,15 @@ void handleCurrentControl()
         HAL_Delay(1);
     }
     currentRMS = Calculate_RMS(samples, SAMPLE_COUNT); // Calculate the RMS value
-
-    char buffer[32];
     sprintf(buffer, "%.2f", currentRMS); // Format float to a string
-    HAL_UART_Transmit(&huart1, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
+
+    int msgLength = strlen((char*)currentResponse);
+    int bufferLength = strlen(buffer);
+    if (msgLength + bufferLength + 1 < CURRENT_RESPONSE_SIZE){
+        strcat((char *)currentResponse, buffer); // Append currentRMS to xbeeMessage
+        strcat((char *)currentResponse, "\r");  // Add a delimiter
+    }
+    HAL_UART_Transmit(&huart1, (char*)currentResponse, strlen((char*)currentResponse), HAL_MAX_DELAY);
 }
 
 /*
