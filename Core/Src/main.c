@@ -63,7 +63,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define CURRENT_RESPONSE_SIZE 15
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -191,6 +191,7 @@ int main(void)
 
   while (1)
   {
+
 	  if (XBeeData.data_received_flag) {
 	           // Check if the message is meant for me
 	           if (memcmp(XBeeData.myAddress, XBeeData.rx_buffer, 8) == 0) {
@@ -337,15 +338,18 @@ void handleCurrentControl()
         HAL_Delay(1);
     }
     currentRMS = Calculate_RMS(samples, SAMPLE_COUNT); // Calculate the RMS value
-    sprintf(buffer, "%.2f", currentRMS); // Format float to a string
+    sprintf(buffer, "%.2f\r", currentRMS); // Format float to a string
 
     int msgLength = strlen((char*)currentResponse);
     int bufferLength = strlen(buffer);
-    if (msgLength + bufferLength + 1 < CURRENT_RESPONSE_SIZE){
+    if (msgLength + bufferLength  < CURRENT_RESPONSE_SIZE){
         strcat((char *)currentResponse, buffer); // Append currentRMS to xbeeMessage
-        strcat((char *)currentResponse, "\r");  // Add a delimiter
     }
-    HAL_UART_Transmit(&huart1, (char*)currentResponse, strlen((char*)currentResponse), HAL_MAX_DELAY);
+    HAL_UART_Transmit(&huart1,  (uint8_t *)currentResponse, strlen((char*)currentResponse), HAL_MAX_DELAY);
+
+    // Reset the currentResponse to its initial state
+    memset(currentResponse + 8, 0, CURRENT_RESPONSE_SIZE - 8); // Clear all content after the 8-byte address
+    currentResponse[8] = '\0'; // Ensure null termination
 }
 
 /*

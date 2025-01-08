@@ -74,6 +74,7 @@ void StoreXBeeSerialLow(uint32_t serialLow);
 #define LED_Pin GPIO_PIN_1
 #define LED_GPIO_Port GPIOB
 
+
 /* USER CODE BEGIN Private defines */
 #define V_REF 3.3 // ADC reference voltage (Vref) in volts
 #define ADC_RESOLUTION 4095.0  // ADC resolution (12-bit gives values from 0 to 4095)
@@ -81,6 +82,7 @@ void StoreXBeeSerialLow(uint32_t serialLow);
 #define DEBOUNCE_DELAY_MS 50
 #define ADDRESS_HIGH 0x13A200  // High address on Xbee devices
 #define SAMPLE_COUNT 250 // Number of samples to take for RMS
+#define CURRENT_RESPONSE_SIZE 15
 
 // External declarations for UART handle and buffers
 extern UART_HandleTypeDef huart1;          // UART handle
