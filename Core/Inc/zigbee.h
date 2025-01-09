@@ -46,6 +46,7 @@ void writeCommand(void);
 int requestParameter(const char *at_command, uint8_t *output_buffer, size_t length);
 void FactoryReset();
 void XBee_NodeDiscovery(void);
+void ATNI(void);  //temp node identifier function
 void exitCommandMode(void);
 
 #endif /* INC_ZIGBEE_H_ */

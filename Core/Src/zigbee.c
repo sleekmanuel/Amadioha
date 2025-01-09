@@ -205,6 +205,41 @@ void TxPowerLevel(uint8_t Level)
     XBeeData.data_received_flag = 0;
 }
 
+/*
+ *
+ */
+void ATNI(void)
+{
+	char at_command[] = "ATNI Switch01\r";
+    // Clear rx_buffer and reset the data_received_flag
+    memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+    XBeeData.data_received_flag = 0;
+
+    char write[] = "ATWR\r";
+    //send ATPL command
+    HAL_UART_Transmit(&huart1, (uint8_t*)at_command, strlen(at_command), HAL_MAX_DELAY);
+    HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
+    // Wait for reception to complete
+    while (!XBeeData.data_received_flag);
+    if (strncmp((char *)XBeeData.rx_buffer, "OK", 2) == 0)
+    {
+    	XBeeData.data_received_flag = 0;
+        memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+        HAL_UART_Transmit(&huart1, (uint8_t*)write, strlen(write), HAL_MAX_DELAY);
+        HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
+        // Wait for reception to complete
+        while (!XBeeData.data_received_flag);
+        if (strncmp((char *)XBeeData.rx_buffer, "OK", 2) != 0)
+        {
+        	// Handle memory write failure
+             printf("Failed to write changes to memory!\n");
+       }
+    }
+    memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+    XBeeData.data_received_flag = 0;
+}
+
+
 void FactoryReset(){
 	// Clear rx_buffer and reset the data_received_flag
 	memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
