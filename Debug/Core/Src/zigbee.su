@@ -5,4 +5,5 @@
 ../Core/Src/zigbee.c:175:6:TxPowerLevel	40	static
 ../Core/Src/zigbee.c:208:6:FactoryReset	24	static
 ../Core/Src/zigbee.c:239:6:RQPowerLevel	16	static
-../Core/Src/zigbee.c:257:6:exitCommandMode	16	static
+../Core/Src/zigbee.c:260:6:XBee_NodeDiscovery	16	static
+../Core/Src/zigbee.c:335:6:exitCommandMode	16	static

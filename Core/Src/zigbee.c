@@ -252,6 +252,84 @@ void RQPowerLevel()
 }
 
 /**
+ * Node Discovery is used to discover devices within the XBee network.
+ * When issued, the local XBee module scans the network and reports details about each discovered device,
+ * including its addresses, Node Identifier, parent address, and other parameters.
+ * it also increments ny1 the number of devices found
+ */
+void XBee_NodeDiscovery()
+{
+	// Clear buffer and reset flag
+	  memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+	  XBeeData.data_received_flag = 0;
+
+	  HAL_UART_Transmit(&huart1, (uint8_t *)"ATND\r", 5, 1000); // send command for ATND
+	  HAL_Delay(200);
+	  HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
+	  for(int i = 0; i < MAX_DEVICES; i++){
+		  while (!XBeeData.data_received_flag);
+		  if(memcmp(XBeeData.rx_buffer, "\r", 1) == 0) break; //end of discovery
+		  memcpy(newNode[i].NetAddress, XBeeData.rx_buffer, sizeof(newNode[i].NetAddress)); // store Network Address
+		  //clear buffer and reset flag
+		  memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+		  XBeeData.data_received_flag = 0;
+		  HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
+		  while (!XBeeData.data_received_flag);
+		  memcpy(newNode[i].SerialHigh, XBeeData.rx_buffer, sizeof(newNode[i].SerialHigh)); //store Serial # High
+		  memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+		  XBeeData.data_received_flag = 0;
+		  HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
+		  while (!XBeeData.data_received_flag);
+		  memcpy(newNode[i].SerialLow, XBeeData.rx_buffer, sizeof(newNode[i].SerialLow)); //store serial # Low
+		  memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+		  XBeeData.data_received_flag = 0;
+		  HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
+		  while (!XBeeData.data_received_flag);
+		  memcpy(newNode[i].NodeID, XBeeData.rx_buffer, sizeof(newNode[i].NodeID));		//store Node Identifier
+		  memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+		  XBeeData.data_received_flag = 0;
+		  HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
+		  while (!XBeeData.data_received_flag);
+		  memcpy(newNode[i].pAddress, XBeeData.rx_buffer, sizeof(newNode[i].pAddress));		//store parent Address
+		  memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+		  XBeeData.data_received_flag = 0;
+		  HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
+		  while (!XBeeData.data_received_flag);
+		  memcpy(newNode[i].dType, XBeeData.rx_buffer, sizeof(newNode[i].dType));		//store device type
+		  memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+		  XBeeData.data_received_flag = 0;
+		  HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
+		  while (!XBeeData.data_received_flag);
+		  memcpy(newNode[i].RSSI, XBeeData.rx_buffer, sizeof(newNode[i].RSSI));			//store RSSI
+		  memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+		  XBeeData.data_received_flag = 0;
+		  HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
+		  while (!XBeeData.data_received_flag);
+		  memcpy(newNode[i].pID, XBeeData.rx_buffer, sizeof(newNode[i].pID));		//profile ID
+		  memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+		  XBeeData.data_received_flag = 0;
+		  HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
+		  while (!XBeeData.data_received_flag);
+		  memcpy(newNode[i].manID, XBeeData.rx_buffer, sizeof(newNode[i].manID));	//manufacturer ID
+		  memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+		  XBeeData.data_received_flag = 0;
+		  HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
+		  while (!XBeeData.data_received_flag);
+		  memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);			//receive and reset carriage return (signifies end of one device spec)
+		  XBeeData.data_received_flag = 0;
+		  HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
+
+		  deviceCount++; //increment # of devices discovered
+
+		    // Check if the maximum device limit is reached
+		    if (deviceCount >= MAX_DEVICES)
+		    {
+		        break;
+		    }
+	  }
+}
+
+/**
  * @brief  Exit XBee AT Command Mode (ATCN command).
  */
 void exitCommandMode(void)

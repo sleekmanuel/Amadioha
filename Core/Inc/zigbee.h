@@ -45,5 +45,7 @@ void setDestinationAddress(uint32_t DH, uint32_t DL);
 void writeCommand(void);
 int requestParameter(const char *at_command, uint8_t *output_buffer, size_t length);
 void FactoryReset();
+void XBee_NodeDiscovery(void);
+void exitCommandMode(void);
 
 #endif /* INC_ZIGBEE_H_ */

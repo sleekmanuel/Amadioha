@@ -5,4 +5,5 @@
 ../Core/Src/zigbee.c:175:6:TxPowerLevel	5
 ../Core/Src/zigbee.c:208:6:FactoryReset	5
 ../Core/Src/zigbee.c:239:6:RQPowerLevel	2
-../Core/Src/zigbee.c:257:6:exitCommandMode	2
+../Core/Src/zigbee.c:260:6:XBee_NodeDiscovery	14
+../Core/Src/zigbee.c:335:6:exitCommandMode	2

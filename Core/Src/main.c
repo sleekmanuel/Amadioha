@@ -80,6 +80,8 @@ uint8_t previousLoadActive = 0;		// Store previous load state
 uint8_t Load_Active[11] = {0x34, 0x32, 0x32, 0x39, 0x30, 0x45, 0x34, 0x37, 0xB3, 0x11, 0x0D};	// load active feedback
 uint8_t Load_Inactive[11] = {0x34, 0x32, 0x32, 0x39, 0x30, 0x45, 0x34, 0x37, 0xB3, 0xAA, 0x0D}; // load inactive feedback
 
+//Xbee transmission dataframe
+
  XBeeModule XBeeData =
  {		//initialization
 		.rx_buffer = {0},
@@ -88,10 +90,12 @@ uint8_t Load_Inactive[11] = {0x34, 0x32, 0x32, 0x39, 0x30, 0x45, 0x34, 0x37, 0xB
 		.overflow_flag = 0,
 		.myAddress = {0}
 };
-//Xbee transmission dataframe
+ NodeDiscovery newNode[MAX_DEVICES];
+
 uint8_t myDestLow[8];			// store destination address low
 uint8_t Control;                //used to determine if message is a request or command
 uint8_t Data;				   // Transmission data
+uint8_t deviceCount = 1;		// # of devices in network. initialized with 1 to count current device
 
 //ADC PV for Current reading
 float currentRMS = 0;  // Read current RMS value
@@ -161,6 +165,11 @@ int main(void)
 
 
 /* XBEE Configuration--------------------------------------------------------*/
+
+  enterCommandMode();
+  XBee_NodeDiscovery();
+  exitCommandMode();
+  HAL_Delay(2000);
  // Request and store XBee Serial Number Low
   if (requestParameter("ATSL\r", XBeeData.myAddress, sizeof(XBeeData.myAddress)) == XBEE_SUCCESS) {
       //printf("Serial Number Low: %s\n", serial_number_low);

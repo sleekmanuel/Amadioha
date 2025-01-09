@@ -32,6 +32,8 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #define DATA_BUFFER_SIZE 12   // Transmission Buffer size
+#define ADDRESS_SIZE 8
+#define MAX_DEVICES 12
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -41,8 +43,20 @@ typedef struct{
 	uint8_t received_byte;			 // Process UART_Rx by byte
 	volatile uint8_t data_received_flag;		// Flag to indicate data reception
 	volatile uint8_t overflow_flag;		// Flag to indicate UART_Rx overflow
-	uint8_t myAddress[8];		//my serial low address
+	uint8_t myAddress[ADDRESS_SIZE];		//my serial low address
 }XBeeModule;
+
+typedef struct {
+	uint8_t SerialHigh[ADDRESS_SIZE];		//Serial Address high
+	uint8_t SerialLow[ADDRESS_SIZE];		//Serial Address low
+	char NodeID[ADDRESS_SIZE];			// Node Identifier
+	uint8_t RSSI[2];							//RSSI - Signal Strength
+	uint8_t NetAddress[4];					//Network Address
+	uint8_t pAddress[4];					//Parent Address
+	uint8_t dType[2];							//Device Type
+	uint8_t pID[4];							//Profile ID
+	uint8_t manID[4];							// Manufacturer ID
+}NodeDiscovery;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -86,12 +100,10 @@ void StoreXBeeSerialLow(uint32_t serialLow);
 
 // External declarations for UART handle and buffers
 extern UART_HandleTypeDef huart1;          // UART handle
-//extern uint8_t rx_buffer[DATA_BUFFER_SIZE]; // Buffer to store received data
-//extern uint8_t received_byte;              // Variable to store single received byte
-//extern uint8_t mySerialLow[8];             // Array to store Serial Number Low
+extern NodeDiscovery newNode[MAX_DEVICES];
 extern uint8_t myDestLow[8];               // Array to store Destination Number Low
-//extern volatile uint8_t data_received_flag; // Flag to indicate data reception completion
 extern XBeeModule XBeeData;
+extern uint8_t deviceCount;
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
