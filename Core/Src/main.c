@@ -167,12 +167,11 @@ int main(void)
 /* XBEE Configuration--------------------------------------------------------*/
 
   enterCommandMode();
-  XBee_NodeDiscovery();
+  XBee_NodeDiscovery();  // discover all devices in the same network. store in newNode
   exitCommandMode();
   HAL_Delay(2000);
  // Request and store XBee Serial Number Low
   if (requestParameter("ATSL\r", XBeeData.myAddress, sizeof(XBeeData.myAddress)) == XBEE_SUCCESS) {
-      //printf("Serial Number Low: %s\n", serial_number_low);
   } else {
 	  //Blink LED in a loop to indicate issue
       while(1){
@@ -180,12 +179,10 @@ int main(void)
     	  HAL_Delay(100);
       }
   }
-//  enterCommandMode();
-//   RQPowerLevel();
 
 /* XBEE Configuration Ends--------------------------------------------------*/
   /* USER CODE END 2 */
-  memcpy(currentResponse, XBeeData.myAddress, 8);
+  memcpy(currentResponse, XBeeData.myAddress, 8);  //append my serial # low to current value response variable
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 

@@ -5837,31 +5837,31 @@ LOAD /Applications/STM32CubeIDE.app/Contents/Eclipse/plugins/com.st.stm32cube.id
  .debug_macro   0x00023e58      0x20e ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_uart.o
  .debug_macro   0x00024066      0x1e3 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_uart_ex.o
 
-.debug_line     0x00000000    0x16e09
+.debug_line     0x00000000    0x16e07
  .debug_line    0x00000000      0x7dc ./Core/Src/adc.o
  .debug_line    0x000007dc      0x753 ./Core/Src/gpio.o
- .debug_line    0x00000f2f      0xc30 ./Core/Src/main.o
- .debug_line    0x00001b5f      0x72c ./Core/Src/stm32l4xx_hal_msp.o
- .debug_line    0x0000228b      0x836 ./Core/Src/stm32l4xx_it.o
- .debug_line    0x00002ac1      0x84b ./Core/Src/syscalls.o
- .debug_line    0x0000330c      0x51c ./Core/Src/sysmem.o
- .debug_line    0x00003828      0x7c6 ./Core/Src/system_stm32l4xx.o
- .debug_line    0x00003fee      0x799 ./Core/Src/tim.o
- .debug_line    0x00004787      0x7b0 ./Core/Src/usart.o
- .debug_line    0x00004f37      0xda4 ./Core/Src/zigbee.o
- .debug_line    0x00005cdb       0x7a ./Core/Startup/startup_stm32l432kbux.o
- .debug_line    0x00005d55      0xa8e ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal.o
- .debug_line    0x000067e3     0x1cd2 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_adc.o
- .debug_line    0x000084b5      0xcea ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_cortex.o
- .debug_line    0x0000919f      0xd26 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_dma.o
- .debug_line    0x00009ec5      0xb30 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_gpio.o
- .debug_line    0x0000a9f5      0xc1a ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_pwr_ex.o
- .debug_line    0x0000b60f      0xfd8 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_rcc.o
- .debug_line    0x0000c5e7     0x1313 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_rcc_ex.o
- .debug_line    0x0000d8fa     0x3c00 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_tim.o
- .debug_line    0x000114fa     0x1b22 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_tim_ex.o
- .debug_line    0x0001301c     0x31c6 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_uart.o
- .debug_line    0x000161e2      0xc27 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_uart_ex.o
+ .debug_line    0x00000f2f      0xc2e ./Core/Src/main.o
+ .debug_line    0x00001b5d      0x72c ./Core/Src/stm32l4xx_hal_msp.o
+ .debug_line    0x00002289      0x836 ./Core/Src/stm32l4xx_it.o
+ .debug_line    0x00002abf      0x84b ./Core/Src/syscalls.o
+ .debug_line    0x0000330a      0x51c ./Core/Src/sysmem.o
+ .debug_line    0x00003826      0x7c6 ./Core/Src/system_stm32l4xx.o
+ .debug_line    0x00003fec      0x799 ./Core/Src/tim.o
+ .debug_line    0x00004785      0x7b0 ./Core/Src/usart.o
+ .debug_line    0x00004f35      0xda4 ./Core/Src/zigbee.o
+ .debug_line    0x00005cd9       0x7a ./Core/Startup/startup_stm32l432kbux.o
+ .debug_line    0x00005d53      0xa8e ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal.o
+ .debug_line    0x000067e1     0x1cd2 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_adc.o
+ .debug_line    0x000084b3      0xcea ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_cortex.o
+ .debug_line    0x0000919d      0xd26 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_dma.o
+ .debug_line    0x00009ec3      0xb30 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_gpio.o
+ .debug_line    0x0000a9f3      0xc1a ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_pwr_ex.o
+ .debug_line    0x0000b60d      0xfd8 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_rcc.o
+ .debug_line    0x0000c5e5     0x1313 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_rcc_ex.o
+ .debug_line    0x0000d8f8     0x3c00 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_tim.o
+ .debug_line    0x000114f8     0x1b22 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_tim_ex.o
+ .debug_line    0x0001301a     0x31c6 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_uart.o
+ .debug_line    0x000161e0      0xc27 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_uart_ex.o
 
 .debug_str      0x00000000    0xdca21
  .debug_str     0x00000000    0xd1471 ./Core/Src/adc.o

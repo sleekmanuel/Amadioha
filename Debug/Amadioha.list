@@ -37,11 +37,11 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  16 .debug_macro  00024249  00000000  00000000  0002834a  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   00016e09  00000000  00000000  0004c593  2**0
+ 17 .debug_line   00016e07  00000000  00000000  0004c593  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    000dca21  00000000  00000000  0006339c  2**0
+ 18 .debug_str    000dca21  00000000  00000000  0006339a  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000043  00000000  00000000  0013fdbd  2**0
+ 19 .comment      00000043  00000000  00000000  0013fdbb  2**0
                   CONTENTS, READONLY
  20 .debug_frame  0000655c  00000000  00000000  0013fe00  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
@@ -1770,7 +1770,7 @@ int main(void)
 
   enterCommandMode();
  8001272:	f000 fd15 	bl	8001ca0 <enterCommandMode>
-  XBee_NodeDiscovery();
+  XBee_NodeDiscovery();  // discover all devices in the same network. store in newNode
  8001276:	f000 fde5 	bl	8001e44 <XBee_NodeDiscovery>
   exitCommandMode();
  800127a:	f000 ff51 	bl	8002120 <exitCommandMode>
@@ -1786,7 +1786,6 @@ int main(void)
  8001290:	4603      	mov	r3, r0
  8001292:	2b00      	cmp	r3, #0
  8001294:	d008      	beq.n	80012a8 <main+0x64>
-      //printf("Serial Number Low: %s\n", serial_number_low);
   } else {
 	  //Blink LED in a loop to indicate issue
       while(1){
@@ -1800,12 +1799,12 @@ int main(void)
     	  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin); // turn on LEDs
  80012a4:	bf00      	nop
  80012a6:	e7f6      	b.n	8001296 <main+0x52>
-//  enterCommandMode();
-//   RQPowerLevel();
+      }
+  }
 
 /* XBEE Configuration Ends--------------------------------------------------*/
   /* USER CODE END 2 */
-  memcpy(currentResponse, XBeeData.myAddress, 8);
+  memcpy(currentResponse, XBeeData.myAddress, 8);  //append my serial # low to current value response variable
  80012a8:	4b2f      	ldr	r3, [pc, #188]	@ (8001368 <main+0x124>)
  80012aa:	4a30      	ldr	r2, [pc, #192]	@ (800136c <main+0x128>)
  80012ac:	320f      	adds	r2, #15
