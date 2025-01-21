@@ -77,8 +77,8 @@
 ///////// XBee PV ////////////////////
 uint8_t loadActive = 0;				 // Status for active Load
 uint8_t previousLoadActive = 0;		// Store previous load state
-uint8_t Load_Active[11] = {0x34, 0x32, 0x32, 0x39, 0x30, 0x45, 0x34, 0x37, 0xB3, 0x11, 0x0D};	// load active feedback
-uint8_t Load_Inactive[11] = {0x34, 0x32, 0x32, 0x39, 0x30, 0x45, 0x34, 0x37, 0xB3, 0xAA, 0x0D}; // load inactive feedback
+uint8_t Load_Active[11] = {52, 50, 55, 48, 55, 53, 55, 65, 0xB3, 0x11, 0x0D};	// load active feedback
+uint8_t Load_Inactive[11] = {52, 50, 55, 48, 55, 53, 55, 65, 0xB3, 0xAA, 0x0D}; // load inactive feedback
 
 //Xbee transmission dataframe
 
@@ -165,13 +165,16 @@ int main(void)
 
 
 /* XBEE Configuration--------------------------------------------------------*/
-
-  enterCommandMode();
-  XBee_NodeDiscovery();  // discover all devices in the same network. store in newNode
-  exitCommandMode();
-  HAL_Delay(2000);
+//
+//  enterCommandMode();
+//  XBee_NodeDiscovery();  // discover all devices in the same network. store in newNode
+  //exitCommandMode();
+ // HAL_Delay(2000);
+  //requestParameter("ATDL\r", myDestLow, sizeof(myDestLow));
+  //setDestinationAddress(0x00, 0xFFFF);
+  //setParameter("ATDL 0xFFFF\r");
  // Request and store XBee Serial Number Low
-  if (requestParameter("ATSL\r", XBeeData.myAddress, sizeof(XBeeData.myAddress)) == XBEE_SUCCESS) {
+   if (requestParameter("ATSL\r", XBeeData.myAddress, sizeof(XBeeData.myAddress)) == XBEE_SUCCESS) {
   } else {
 	  //Blink LED in a loop to indicate issue
       while(1){

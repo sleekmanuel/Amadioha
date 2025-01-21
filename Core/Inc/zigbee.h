@@ -16,6 +16,7 @@
 #define XBEE_SUCCESS        0
 #define XBEE_ERROR_RESPONSE 1
 #define XBEE_ERROR_TIMEOUT  2
+#define XBEE_TIMEOUT_DURATION 1000
 
 // Zigbee Device Addresses
 #define ZIGBEE_COORDINATOR_ADDRESS    0x0000  // Address for the coordinator
@@ -44,7 +45,8 @@ void enterCommandMode(void);
 void setDestinationAddress(uint32_t DH, uint32_t DL);
 void writeCommand(void);
 int requestParameter(const char *at_command, uint8_t *output_buffer, size_t length);
-void FactoryReset();
+int setParameter(const char *at_command);
+void factoryReset();
 void XBee_NodeDiscovery(void);
 void ATNI(void);  //temp node identifier function
 void exitCommandMode(void);

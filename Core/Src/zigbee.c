@@ -9,6 +9,8 @@
 
 #include <zigbee.h>
 
+uint32_t start_time;
+
 void enterCommandMode(void)
 {
     char command_mode[3] = "+++";
@@ -62,6 +64,69 @@ int requestParameter(const char *at_command, uint8_t *output_buffer, size_t leng
     return strncmp((char *)XBeeData.rx_buffer, "OK", 2) == 0 ? XBEE_SUCCESS : XBEE_ERROR_RESPONSE;
 }
 
+/**
+ * @brief  Enter XBee AT Command Mode and set new config parameter and exit. returns int response
+ * @param at_command: AT command to enter with parameter to set
+ *
+ */
+
+int setParameter(const char *at_command)
+{
+    // Clear buffer and reset flag
+    memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+    XBeeData.data_received_flag = 0;
+
+    char command_mode[] = "+++";
+    char write_command[] = "ATWR\r";
+    char exit_command[] = "ATCN\r";
+
+    // Enter AT command mode
+    HAL_UART_Transmit(&huart1, (uint8_t *)command_mode, strlen(command_mode), HAL_MAX_DELAY);
+    HAL_Delay(1000);
+    HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 3);
+
+    // Send the parameter request command
+    XBeeData.data_received_flag = 0;
+    memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+    HAL_UART_Transmit(&huart1, (uint8_t *)at_command, strlen(at_command), HAL_MAX_DELAY);
+    HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
+
+    //implement timeout for xbee response
+    start_time = HAL_GetTick();
+    while (!XBeeData.data_received_flag)
+    {
+        if ((HAL_GetTick() - start_time) >= XBEE_TIMEOUT_DURATION)
+        {
+            return XBEE_ERROR_TIMEOUT;
+        }
+    }
+
+    if (strncmp((char *)XBeeData.rx_buffer, "OK", 2) == 0)
+    {
+    	 // Reset flag and buffer
+    	 XBeeData.data_received_flag = 0;
+    	 memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+
+    	 // Save changes with ATWR command
+    	 HAL_UART_Transmit(&huart1, (uint8_t *)write_command, strlen(write_command), HAL_MAX_DELAY);
+    	 HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
+
+    	 // Wait for reception to complete
+    	 while (!XBeeData.data_received_flag);
+    	 if (strncmp((char *)XBeeData.rx_buffer, "OK", 2) == 0){
+        	 // Reset flag and buffer
+        	 XBeeData.data_received_flag = 0;
+        	 memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+        	 // Exit AT command mode
+        	 HAL_UART_Transmit(&huart1, (uint8_t *)exit_command, strlen(exit_command), HAL_MAX_DELAY);
+        	 HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
+        	 // Wait for reception to complete
+        	 while (!XBeeData.data_received_flag);
+    	 }
+    }
+
+    return strncmp((char *)XBeeData.rx_buffer, "OK", 2) == 0 ? XBEE_SUCCESS : XBEE_ERROR_RESPONSE;
+}
 
 
 void writeCommand(){
@@ -100,7 +165,7 @@ void setDestinationAddress(uint32_t DH, uint32_t DL)
     char at_high[20];
     char at_low[20];
     char command_mode[3] = "+++";  //Command to enter AT command mode
-    char exit_command[] = "ATCN\r";  // Command to exit AT command mode
+    char exit_command[] = "ATWR\r";  // Command to exit AT command mode
 
     // Format the AT commands
     snprintf(at_high, sizeof(at_high), "ATDH %08X\r", (unsigned int)DH);
@@ -210,7 +275,7 @@ void TxPowerLevel(uint8_t Level)
  */
 void ATNI(void)
 {
-	char at_command[] = "ATNI Switch01\r";
+	char at_command[] = "ATNI SWITCH1\r";
     // Clear rx_buffer and reset the data_received_flag
     memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
     XBeeData.data_received_flag = 0;
@@ -240,7 +305,7 @@ void ATNI(void)
 }
 
 
-void FactoryReset(){
+void factoryReset(){
 	// Clear rx_buffer and reset the data_received_flag
 	memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
 	XBeeData.data_received_flag = 0;
