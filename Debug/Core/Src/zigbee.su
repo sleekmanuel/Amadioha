@@ -1,6 +1,6 @@
 ../Core/Src/zigbee.c:14:6:enterCommandMode	16	static
-../Core/Src/zigbee.c:31:5:requestParameter	40	static
-../Core/Src/zigbee.c:73:5:setParameter	40	static
+../Core/Src/zigbee.c:31:5:requestParameter	32	static
+../Core/Src/zigbee.c:73:5:setParameter	32	static
 ../Core/Src/zigbee.c:132:6:writeCommand	24	static
 ../Core/Src/zigbee.c:163:6:setDestinationAddress	72	static
 ../Core/Src/zigbee.c:240:6:TxPowerLevel	40	static

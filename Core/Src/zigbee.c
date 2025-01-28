@@ -30,19 +30,19 @@ void enterCommandMode(void)
  */
 int requestParameter(const char *at_command, uint8_t *output_buffer, size_t length) {
     // Clear buffer and reset flag
-    memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
-    XBeeData.data_received_flag = 0;
+//    memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+//    XBeeData.data_received_flag = 0;
 
-    char command_mode[] = "+++";
+    //char command_mode[] = "+++";
     char exit_command[] = "ATCN\r";
 
-    // Enter AT command mode
-    HAL_UART_Transmit(&huart1, (uint8_t *)command_mode, strlen(command_mode), HAL_MAX_DELAY);
-    HAL_Delay(1000);
-    HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
-
-    while (!XBeeData.data_received_flag);
-    if (strncmp((char *)XBeeData.rx_buffer, "OK", 2) != 0) return XBEE_ERROR_RESPONSE;
+//    // Enter AT command mode
+//    HAL_UART_Transmit(&huart1, (uint8_t *)command_mode, strlen(command_mode), HAL_MAX_DELAY);
+//    HAL_Delay(1000);
+//    HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
+//
+//    while (!XBeeData.data_received_flag);
+//    if (strncmp((char *)XBeeData.rx_buffer, "OK", 2) != 0) return XBEE_ERROR_RESPONSE;
 
     // Send the parameter request command
     XBeeData.data_received_flag = 0;
@@ -73,17 +73,17 @@ int requestParameter(const char *at_command, uint8_t *output_buffer, size_t leng
 int setParameter(const char *at_command)
 {
     // Clear buffer and reset flag
-    memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
-    XBeeData.data_received_flag = 0;
+//    memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+//    XBeeData.data_received_flag = 0;
 
-    char command_mode[] = "+++";
+   // char command_mode[] = "+++";
     char write_command[] = "ATWR\r";
     char exit_command[] = "ATCN\r";
 
-    // Enter AT command mode
-    HAL_UART_Transmit(&huart1, (uint8_t *)command_mode, strlen(command_mode), HAL_MAX_DELAY);
-    HAL_Delay(1000);
-    HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 3);
+//    // Enter AT command mode
+//    HAL_UART_Transmit(&huart1, (uint8_t *)command_mode, strlen(command_mode), HAL_MAX_DELAY);
+//    HAL_Delay(1000);
+//    HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 3);
 
     // Send the parameter request command
     XBeeData.data_received_flag = 0;
@@ -101,29 +101,29 @@ int setParameter(const char *at_command)
         }
     }
 
-    if (strncmp((char *)XBeeData.rx_buffer, "OK", 2) == 0)
-    {
-    	 // Reset flag and buffer
-    	 XBeeData.data_received_flag = 0;
-    	 memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
-
-    	 // Save changes with ATWR command
-    	 HAL_UART_Transmit(&huart1, (uint8_t *)write_command, strlen(write_command), HAL_MAX_DELAY);
-    	 HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
-
-    	 // Wait for reception to complete
-    	 while (!XBeeData.data_received_flag);
-    	 if (strncmp((char *)XBeeData.rx_buffer, "OK", 2) == 0){
-        	 // Reset flag and buffer
-        	 XBeeData.data_received_flag = 0;
-        	 memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
-        	 // Exit AT command mode
-        	 HAL_UART_Transmit(&huart1, (uint8_t *)exit_command, strlen(exit_command), HAL_MAX_DELAY);
-        	 HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
-        	 // Wait for reception to complete
-        	 while (!XBeeData.data_received_flag);
-    	 }
-    }
+//    if (strncmp((char *)XBeeData.rx_buffer, "OK", 2) == 0)
+//    {
+//    	 // Reset flag and buffer
+//    	 XBeeData.data_received_flag = 0;
+//    	 memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+//
+//    	 // Save changes with ATWR command
+//    	 HAL_UART_Transmit(&huart1, (uint8_t *)write_command, strlen(write_command), HAL_MAX_DELAY);
+//    	 HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
+//
+//    	 // Wait for reception to complete
+//    	 while (!XBeeData.data_received_flag);
+//    	 if (strncmp((char *)XBeeData.rx_buffer, "OK", 2) == 0){
+//        	 // Reset flag and buffer
+//        	 XBeeData.data_received_flag = 0;
+//        	 memset(XBeeData.rx_buffer, 0, DATA_BUFFER_SIZE);
+//        	 // Exit AT command mode
+//        	 HAL_UART_Transmit(&huart1, (uint8_t *)exit_command, strlen(exit_command), HAL_MAX_DELAY);
+//        	 HAL_UART_Receive_IT(&huart1, &XBeeData.received_byte, 1);
+//        	 // Wait for reception to complete
+//        	 while (!XBeeData.data_received_flag);
+//    	 }
+//    }
 
     return strncmp((char *)XBeeData.rx_buffer, "OK", 2) == 0 ? XBEE_SUCCESS : XBEE_ERROR_RESPONSE;
 }
