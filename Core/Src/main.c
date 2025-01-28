@@ -167,9 +167,9 @@ int main(void)
 /* XBEE Configuration--------------------------------------------------------*/
 //
   //
-  //enterCommandMode();
+  enterCommandMode();
  // factoryReset();
-  //XBee_NodeDiscovery();  // discover all devices in the same network. store in newNode
+  XBee_NodeDiscovery();  // discover all devices in the same network. store in newNode
   //exitCommandMode();
  // HAL_Delay(2000);
   //requestParameter("ATdb\r", myDestLow, sizeof(myDestLow));
