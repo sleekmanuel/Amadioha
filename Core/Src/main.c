@@ -167,16 +167,16 @@ int main(void)
 /* XBEE Configuration--------------------------------------------------------*/
 //
   //
-  enterCommandMode();
- // factoryReset();
-  XBee_NodeDiscovery();  // discover all devices in the same network. store in newNode
+  //enterCommandMode();
+  //factoryReset();
+  //XBee_NodeDiscovery();  // discover all devices in the same network. store in newNode
   //exitCommandMode();
  // HAL_Delay(2000);
   //requestParameter("ATdb\r", myDestLow, sizeof(myDestLow));
-  //setDestinationAddress(0x00, 0xFFFF);
-  //setParameter("ATSC0010\r");
+  //setDestinationAddress(ADDRESS_HIGH, 0x4270271A);
+  //setParameter("ATNI SWITCH\r");
  // Request and store XBee Serial Number Low
-  enterCommandMode();
+   enterCommandMode();
    if (requestParameter("ATSL\r", XBeeData.myAddress, sizeof(XBeeData.myAddress)) == XBEE_SUCCESS) {
   } else {
 	  //Blink LED in a loop to indicate issue
